@@ -14,6 +14,7 @@ create table public.schedule_slots (
   slot_date  date not null,
   slot_time  time not null,
   rules_mode text not null default 'matrix' check (rules_mode in ('matrix','simple')),
+  rolling    boolean not null default false,   -- true = only released ~2 weeks at a time (November). false = always visible (December)
   primary key (slot_date, slot_time)
 );
 
@@ -152,7 +153,8 @@ begin
       else 'available'
     end
   from schedule_slots s
-  where s.slot_date between v_today and v_today + v_win
+  where s.slot_date >= v_today
+    and (not s.rolling or s.slot_date <= v_today + v_win)
     and slot_ts(s.slot_date, s.slot_time) > now()
   order by s.slot_date, s.slot_time;
 end $$;
@@ -182,7 +184,7 @@ begin
   then raise exception 'INVALID_INPUT'; end if;
 
   select * into v_slot from schedule_slots where slot_date = p_date and slot_time = p_time;
-  if not found or p_date > v_today + v_win or v_start <= now()
+  if not found or (v_slot.rolling and p_date > v_today + v_win) or v_start <= now()
      or not slot_allowed(p_date, p_time, v_slot.rules_mode, p_service, p_tier, p_removal)
   then raise exception 'SLOT_UNAVAILABLE'; end if;
 

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { CANCEL_CUTOFF_HOURS, IG_HANDLE, IG_URL, REMOVALS, SERVICES } from '../../lib/config'
-import { REMINDERS } from '../../lib/content'
+import { addMinutes, format } from 'date-fns'
+import { CANCEL_CUTOFF_HOURS, IG_URL, REMOVALS, SERVICES } from '../../lib/config'
+import { AFTER_RESERVE, CHANGE_LINES, reminders } from '../../lib/content'
 import { cleanPhone, fmtDateLong, fmtTime, hoursUntil, peso } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, Shell, StatusBadge, inputCls } from '../../components/ui'
 import Countdown from '../../components/Countdown'
+import Collapsible from '../../components/Collapsible'
+import { RichList } from '../../components/Rich'
 
 const STORE = 'cpn_booking'
 const readSaved = () => { try { return JSON.parse(localStorage.getItem(STORE)) } catch { return null } }
@@ -51,11 +54,7 @@ function PaymentBox({ b, cfg, onDone }) {
     <Card className="space-y-3">
       <h2 className="font-semibold text-peach">{b.receipt_uploaded ? 'Receipt received' : 'Send your downpayment'}</h2>
       {b.receipt_uploaded && <p className="text-sm text-emerald-200">Thank you! I’ll confirm your payment soon. You can upload another screenshot below if needed.</p>}
-      <ol className="list-decimal space-y-1 pl-5 text-[13px] text-cream/85">
-        <li>Send at least <b>{peso(min)}</b> (you may pay more) via GCash to the number below or scan the QR.</li>
-        <li>Screenshot your GCash receipt.</li>
-        <li>Upload it here{b.status === 'awaiting_payment' ? ' before the timer runs out' : ''}.</li>
-      </ol>
+      <p className="text-[13px] text-cream/80">Minimum down payment of <b>{peso(min)}</b> (you may pay more) via GCash. Screenshot your receipt and upload it here.</p>
       <div className="flex items-center justify-between gap-2 rounded-xl bg-ink/50 p-3">
         <div>
           <div className="text-xs text-cream/60">GCash · {cfg?.gcash_name}</div>
@@ -84,6 +83,7 @@ export default function MyBooking() {
   const [askCancel, setAskCancel] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [sec, setSec] = useState('reminders')
 
   const load = useCallback(async () => {
     if (!creds) return
@@ -114,9 +114,9 @@ export default function MyBooking() {
   const cancellable = (open || b.status === 'confirmed') && hoursUntil(b.slot_date, b.slot_time) > CANCEL_CUTOFF_HOURS
   const dead = ['expired', 'cancelled', 'rejected', 'no_show'].includes(b.status)
   const rows = [
-    ['Name', b.full_name], ['Instagram', b.instagram], ['Phone', b.phone], ['Age', b.age],
+    ['Name', b.full_name], ['Instagram handle', b.instagram], ['Phone number', b.phone], ['Age', b.age],
     ['Service', SERVICES[b.service].label + (b.length ? ` (${b.length})` : '')],
-    ['Removal', REMOVALS[b.removal].label], ['Design tier', `Tier ${b.tier}`],
+    ['Removal', REMOVALS[b.removal].label], ['Design tier level', `Tier ${b.tier}`],
     ...(b.intensive ? [['Add-on', 'Intensive Manicure']] : []),
   ]
 
@@ -133,9 +133,9 @@ export default function MyBooking() {
 
         {awaiting && (
           <Card className="space-y-1 border-amber-300/40 text-center">
-            <div className="text-sm text-amber-100">Your slot is held for you for</div>
+            <div className="text-xs text-amber-100">Time left to pay your down payment</div>
             <Countdown expiresAt={b.expires_at} onExpire={load} className="text-4xl" />
-            <div className="text-xs text-cream/70">Upload your downpayment receipt before this runs out, or the slot is released to others.</div>
+            <div className="text-xs text-cream/70"><b>NO DOWNPAYMENT= NO APPOINTMENT.</b> Upload your receipt before the timer ends or the slot is released.</div>
           </Card>
         )}
         {dead && (
@@ -147,16 +147,18 @@ export default function MyBooking() {
         {open && cfg && <PaymentBox b={b} cfg={cfg} onDone={load} />}
 
         {(b.status === 'confirmed' || b.status === 'completed') && (
-          <Card className="space-y-2">
-            <h2 className="font-semibold text-peach">You’re confirmed! 💅</h2>
-            {b.location && <p className="text-sm"><b>Location:</b> {b.location}</p>}
-            <ul className="list-disc space-y-1 pl-5 text-[13px] text-cream/85">{REMINDERS.map((r) => <li key={r}>{r}</li>)}</ul>
+          <Card className="space-y-3">
+            <h2 className="font-semibold text-peach">Booking confirmed</h2>
+            {b.location && <p className="whitespace-pre-line text-sm">{b.location}</p>}
+            <Collapsible tone="flat" title="Additional reminders" open={sec === 'reminders'} onToggle={() => setSec(sec === 'reminders' ? null : 'reminders')}>
+              <RichList items={reminders(format(addMinutes(new Date(`2000-01-01T${b.slot_time.slice(0, 8)}`), 15), 'h:mm a'))} />
+            </Collapsible>
           </Card>
         )}
 
         {!dead && b.status !== 'completed' && (
           <Card className="space-y-2 text-sm">
-            <p>💬 Please send your design inspo to <b>{IG_HANDLE}</b> on Instagram for your full quotation.</p>
+            <p>{AFTER_RESERVE}</p>
             <Btn as="a" href={IG_URL} target="_blank" rel="noreferrer" variant="soft" className="w-full">Message on Instagram</Btn>
           </Card>
         )}
@@ -167,19 +169,22 @@ export default function MyBooking() {
           <div className="flex justify-between border-t border-cream/10 pt-2"><span className="text-cream/60">Estimated base total</span><span>{peso(b.estimated_price)}</span></div>
           {b.final_price != null && <div className="flex justify-between font-semibold"><span>Final price</span><span className="text-rose">{peso(b.final_price)}</span></div>}
           {b.dp_amount != null && <div className="flex justify-between"><span className="text-cream/60">Downpayment sent</span><span>{peso(b.dp_amount)}</span></div>}
-          <p className="pt-1 text-xs text-cream/60">The estimate may change based on your exact design. The final price is set by the nailtech.</p>
         </Card>
 
         {(open || b.status === 'confirmed') && (
-          <Card className="space-y-2 text-sm">
-            <h2 className="font-semibold text-peach">Need to change something?</h2>
-            <p className="text-cream/80">To reschedule, please message me on Instagram.</p>
-            {cancellable ? (
-              <Btn variant="ghost" className="w-full" onClick={() => setAskCancel(true)}>Cancel my booking</Btn>
-            ) : (
-              <p className="text-xs text-cream/70">Online cancellation closes {CANCEL_CUTOFF_HOURS} hours before your appointment. Cancelling within 72 hours forfeits your downpayment; within 48 hours or on the day means paying in full. Please message me on Instagram.</p>
-            )}
-            <ErrorText>{msg}</ErrorText>
+          <Card className="space-y-2 !p-0">
+            <Collapsible tone="flat" title="Reschedule or cancel" open={sec === 'change'} onToggle={() => setSec(sec === 'change' ? null : 'change')}>
+              <div className="space-y-3">
+                <RichList items={CHANGE_LINES} />
+                <p className="text-xs text-cream/70">To reschedule, please message me on Instagram.</p>
+                {cancellable ? (
+                  <Btn variant="ghost" className="w-full" onClick={() => setAskCancel(true)}>Cancel my booking</Btn>
+                ) : (
+                  <p className="text-xs text-cream/70">Online cancellation closes {CANCEL_CUTOFF_HOURS} hours before your appointment. Please message me on Instagram.</p>
+                )}
+                <ErrorText>{msg}</ErrorText>
+              </div>
+            </Collapsible>
           </Card>
         )}
         <div className="text-center"><button onClick={forget} className="text-xs text-cream/50 underline">Not you? Look up a different booking</button></div>

@@ -8,9 +8,11 @@ import Dashboard from './pages/admin/Dashboard'
 import BookingDetail from './pages/admin/BookingDetail'
 import Schedule from './pages/admin/Schedule'
 import Settings from './pages/admin/Settings'
+import ErrorBoundary from './components/ErrorBoundary'
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -25,5 +27,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

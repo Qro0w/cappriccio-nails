@@ -7,7 +7,7 @@ insert into public.settings (key, value) values
   ('min_dp',        '400'),
   ('hold_hours',    '12'),
   ('window_days',   '14'),
-  ('location_text', 'Main landmark: McDonald''s, Fuente Osmeña. Exact address: (edit this in Admin > Settings)')
+  ('location_text', E'J. Llorente St., Osmeña Blvd, Cebu City\nTall brown wood-like gate\nIn between MedExpress Drugstore and Hi-Precision\n\nLandmarks:\nMedalle Court\nHi-Precision Diagnostics (Cebu Main)\nAnitas, Fuente Osmeña')
 on conflict (key) do nothing;
 
 -- ---------- Checkbox matrix (Scheduling doc) ----------
@@ -37,8 +37,8 @@ on conflict do nothing;
 -- NOVEMBER (simple rules): 3 = 9:00, 1:00, 4:00   2 = 12:00, 4:00
 -- DECEMBER (matrix rules): 4 = 9:00, 12:00, 2:30, 5:00   3 = 11:00, 2:30, 5:00
 --                          2 = 2:30, 5:00  (the doc doesn't say - edit in the app if wrong)
-insert into public.schedule_slots (slot_date, slot_time, rules_mode)
-select p.d, t::time, p.mode
+insert into public.schedule_slots (slot_date, slot_time, rules_mode, rolling)
+select p.d, t::time, p.mode, (p.mode = 'simple')   -- November is released two weeks at a time
 from (
   select date '2026-11-01' + (o - 1)::int as d, n, 'simple'::text as mode
   from unnest(array[3,2,0,2,3,2,0, 3,2,3,0,2,3,2, 0,3,2,3,0,2,3, 2,0,3,2,3,0,3, 0,3]) with ordinality as x(n, o)

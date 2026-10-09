@@ -4,19 +4,20 @@ export const IG_HANDLE = '@cappriccio.nails'
 export const CANCEL_CUTOFF_HOURS = 72 // client can self-cancel only if MORE than this many hours remain
 
 export const SERVICES = {
-  biab:     { label: 'BIAB (Builder In A Bottle)', short: 'BIAB',          group: 'Structured Manicure', ext: false },
-  hardgel:  { label: 'Hard Gel Overlay',           short: 'Hard Gel Mani', group: 'Structured Manicure', ext: false },
-  softgel:  { label: 'Soft Gel Extensions',        short: 'Soft Gel Ext',  group: 'Nail Extensions',     ext: true },
-  hardgele: { label: 'Hard Gel Extensions',        short: 'Hard Gel Ext',  group: 'Nail Extensions',     ext: true },
+  biab:     { label: 'BIAB (Builder In A Bottle)', short: 'BIAB',          group: 'Structured Manicure types', ext: false },
+  hardgel:  { label: 'Hard Gel Overlay',           short: 'Hard Gel Mani', group: 'Structured Manicure types', ext: false },
+  softgel:  { label: 'Soft Gel Extensions',        short: 'Soft Gel Ext',  group: 'Nail Extensions',           ext: true },
+  hardgele: { label: 'Hard Gel Extensions',        short: 'Hard Gel Ext',  group: 'Nail Extensions',           ext: true },
 }
 export const LENGTHS = ['short', 'medium', 'long']
 
+// Names follow the doc's Rates table. group = the heading used in the removal dropdown.
 export const REMOVALS = {
-  none:   { label: 'No removal',                            fee: 0 },
-  soft:   { label: 'Soft gel removal (my work), new set',   fee: 100 },
-  fill:   { label: 'Structured mani fill',                  fee: 80 },
-  f_soft: { label: 'Foreign soft gel removal, new set',     fee: 200 },
-  f_hard: { label: 'Foreign hard gel removal, new set',     fee: 300 },
+  none:   { label: 'No removal',                         fee: 0,   group: null },
+  fill:   { label: 'Structured Manicure Fill*',          fee: 80,  group: 'My Work' },
+  soft:   { label: 'Soft Gel removal w/ new set',        fee: 100, group: 'My Work' },
+  f_soft: { label: 'Foreign Soft Gel removal w/new set', fee: 200, group: 'Foreign Removals' },
+  f_hard: { label: 'Foreign Hard gel removal w/new set', fee: 300, group: 'Foreign Removals' },
 }
 
 export const INTENSIVE_FEE = 300

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO, startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
-import { IG_HANDLE, IG_URL, INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, removalOptions } from '../../lib/config'
-import { TIER_NOTE } from '../../lib/content'
+import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, removalOptions } from '../../lib/config'
+import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, TIER_NOTE } from '../../lib/content'
+import Rich from '../../components/Rich'
 import { cleanIg, cleanPhone, fmtDate, fmtTime, peso, validPhone } from '../../lib/format'
 import { Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
@@ -32,40 +33,42 @@ function DetailsForm({ form, setForm, onNext, onBack }) {
   const set = (k, v) => setForm({ ...form, [k]: v })
   const e = effective(form)
   const price = calcPrice(form.service, e.length, form.removal, e.intensive)
+  const opts = form.service ? removalOptions(form.service) : []
   const ready =
     form.full_name.trim() && form.instagram.replace('@', '').trim() && validPhone(form.phone) &&
     Number(form.age) >= 1 && form.service && (!e.ext || form.length) && form.removal && form.tier
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       <button onClick={onBack} className="text-sm text-cream/60 underline">← Back</button>
-      <h1 className="font-display text-3xl font-bold">Your details</h1>
+      <h1 className="font-display text-3xl font-bold">Book your appointment</h1>
 
       <Card className="space-y-3">
-        <Field label="Full name"><input className={inputCls} value={form.full_name} onChange={(ev) => set('full_name', ev.target.value)} autoComplete="name" /></Field>
-        <Field label="Instagram handle" hint="So I can find your messages, e.g. @yourname">
+        <Field label="Name"><input className={inputCls} value={form.full_name} onChange={(ev) => set('full_name', ev.target.value)} autoComplete="name" /></Field>
+        <Field label="Instagram handle">
           <input className={inputCls} value={form.instagram} onChange={(ev) => set('instagram', ev.target.value)} autoCapitalize="none" placeholder="@yourname" />
         </Field>
-        <Field label="Phone number" hint="09XX XXX XXXX">
+        <Field label="Phone number">
           <input className={inputCls} inputMode="tel" value={form.phone} onChange={(ev) => set('phone', ev.target.value)} autoComplete="tel" placeholder="09XX XXX XXXX" />
         </Field>
         <Field label="Age">
           <input className={inputCls} inputMode="numeric" value={form.age} onChange={(ev) => set('age', ev.target.value.replace(/\D/g, '').slice(0, 2))} />
         </Field>
-        {Number(form.age) > 0 && Number(form.age) < 15 && (
-          <p className="rounded-xl bg-amber-400/15 p-3 text-xs text-amber-200">Heads up: bookings for clients under 15 are flagged for the nailtech to review.</p>
-        )}
       </Card>
 
       <Card className="space-y-3">
-        <Field label="Which nail service?">
+        <Field label="Which nail service">
           <select className={inputCls} value={form.service} onChange={(ev) => setForm({ ...form, service: ev.target.value, length: '', removal: '' })}>
-            <option value="">Choose a service…</option>
-            {Object.entries(SERVICES).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
+            <option value="">Choose…</option>
+            {['Structured Manicure types', 'Nail Extensions'].map((g) => (
+              <optgroup key={g} label={g}>
+                {Object.entries(SERVICES).filter(([, s]) => s.group === g).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
+              </optgroup>
+            ))}
           </select>
         </Field>
         {e.ext && (
-          <Field label="What length?">
+          <Field label="What length">
             <div className="grid grid-cols-3 gap-2">
               {LENGTHS.map((l) => (
                 <button key={l} onClick={() => set('length', l)}
@@ -75,19 +78,26 @@ function DetailsForm({ form, setForm, onNext, onBack }) {
           </Field>
         )}
         {form.service && (
-          <Field label="Is removal needed?" hint="Please mention any existing enhancements. Not doing so adds ₱80 on top of removal fees.">
+          <Field label="If removal is needed">
             <select className={inputCls} value={form.removal} onChange={(ev) => set('removal', ev.target.value)}>
               <option value="">Choose…</option>
-              {removalOptions(form.service).map((k) => (
-                <option key={k} value={k}>{REMOVALS[k].label}{REMOVALS[k].fee ? ` (+${peso(REMOVALS[k].fee)})` : ''}</option>
+              <option value="none">{REMOVALS.none.label}</option>
+              {['My Work', 'Foreign Removals'].map((g) => (
+                <optgroup key={g} label={g}>
+                  {opts.filter((k) => REMOVALS[k].group === g).map((k) => (
+                    <option key={k} value={k}>{REMOVALS[k].label} (+{peso(REMOVALS[k].fee)})</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
+            {form.removal === 'f_hard' && <span className="mt-1 block text-xs font-semibold text-peach">{F_HARD_NOTE}</span>}
+            <span className="mt-1 block text-xs text-cream/60"><Rich text={REMOVAL_NOTE} /></span>
           </Field>
         )}
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="font-semibold text-peach">Design tier</h2>
+        <h2 className="font-semibold text-peach">Design tier level</h2>
         <div className="grid grid-cols-2 gap-2">
           {[1, 2, 3, 4].map((n) => (
             <button key={n} onClick={() => set('tier', n)}
@@ -107,10 +117,9 @@ function DetailsForm({ form, setForm, onNext, onBack }) {
       </Card>
 
       {price != null && (
-        <div className="rounded-2xl border border-rose/30 bg-ink/50 p-4 text-center">
-          <div className="text-xs text-cream/60">Estimated base total</div>
-          <div className="font-display text-3xl font-bold text-rose">{peso(price)}</div>
-          <div className="text-xs text-cream/60">Your final price depends on your design. Message me for the exact price.</div>
+        <div className="rounded-2xl border border-rose/30 bg-ink/50 p-3 text-center">
+          <span className="text-xs text-cream/60">Estimated base total </span>
+          <span className="font-display text-2xl font-bold text-rose">{peso(price)}</span>
         </div>
       )}
       <Btn className="w-full" disabled={!ready} onClick={onNext}>Choose date & time</Btn>
@@ -213,9 +222,9 @@ function Review({ form, pick, onBack, onTaken }) {
   }
 
   const rows = [
-    ['Name', form.full_name], ['Instagram', cleanIg(form.instagram)], ['Phone', form.phone], ['Age', form.age],
+    ['Name', form.full_name], ['Instagram handle', cleanIg(form.instagram)], ['Phone number', form.phone], ['Age', form.age],
     ['Service', SERVICES[form.service].label + (e.length ? ` (${e.length})` : '')],
-    ['Removal', REMOVALS[form.removal].label], ['Design tier', `Tier ${form.tier}`],
+    ['Removal', REMOVALS[form.removal].label], ['Design tier level', `Tier ${form.tier}`],
     ...(e.intensive ? [['Add-on', 'Intensive Manicure']] : []),
   ]
   return (
@@ -230,8 +239,8 @@ function Review({ form, pick, onBack, onTaken }) {
         <div className="flex justify-between border-t border-cream/10 pt-2 font-semibold"><span>Estimated base total</span><span className="text-rose">{peso(price)}</span></div>
       </Card>
       <Card className="space-y-2 text-[13px]">
-        <p>⏳ Your slot is held for <b>12 hours</b>. Send a downpayment (min ₱400) via GCash and upload your receipt on the next page within that time, or the slot is released. You can pay right away or later.</p>
-        <p>💬 Next, please message <a className="font-semibold text-rose underline" href={IG_URL} target="_blank" rel="noreferrer">{IG_HANDLE}</a> with your design inspo for your full quotation.</p>
+        <p><Rich text="**Down payment must be paid strictly within 12hours of booking**" />. Pay right after reserving or later, then upload your receipt on the next page.</p>
+        <p>{AFTER_RESERVE}</p>
       </Card>
       <ErrorText>{err}</ErrorText>
       <Btn className="w-full" disabled={busy} onClick={submit}>{busy ? 'Reserving…' : 'Reserve this slot'}</Btn>
@@ -243,7 +252,10 @@ export default function Book() {
   const [step, setStep] = useState('policy')
   const [form, setForm] = useState(EMPTY)
   const [pick, setPick] = useState(null)
-  useEffect(() => window.scrollTo(0, 0), [step])
+  useEffect(() => {
+    // braces on purpose: an effect must not return a value
+    try { window.scrollTo(0, 0) } catch { /* ignore */ }
+  }, [step])
   return (
     <Shell>
       {step === 'policy' && <PolicyGate onAgree={() => setStep('info')} />}

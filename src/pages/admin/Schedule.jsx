@@ -28,6 +28,7 @@ export default function Schedule() {
 
   const todays = slots.filter((s) => s.slot_date === day)
   const mode = todays[0]?.rules_mode || 'matrix'
+  const rolling = todays[0]?.rolling || false
   const isBooked = (t) => booked.some((b) => b.slot_date === day && hhmm(b.slot_time) === t)
   const times = [...new Set([...PRESET_TIMES, ...todays.map((s) => hhmm(s.slot_time))])].sort()
   const countFor = (k) => slots.filter((s) => s.slot_date === k).length
@@ -40,13 +41,18 @@ export default function Schedule() {
       if (isBooked(t)) return setErr('This slot has an active booking. Move or reject that booking first.')
       res = await supabase.from('schedule_slots').delete().eq('slot_date', day).eq('slot_time', t)
     } else {
-      res = await supabase.from('schedule_slots').insert({ slot_date: day, slot_time: t, rules_mode: mode })
+      res = await supabase.from('schedule_slots').insert({ slot_date: day, slot_time: t, rules_mode: mode, rolling })
     }
     if (res.error) setErr('Could not save that change.')
     load()
   }
   async function setMode(simple) {
     const { error } = await supabase.from('schedule_slots').update({ rules_mode: simple ? 'simple' : 'matrix' }).eq('slot_date', day)
+    if (error) setErr('Could not save that change.')
+    load()
+  }
+  async function setRolling(on) {
+    const { error } = await supabase.from('schedule_slots').update({ rolling: on }).eq('slot_date', day)
     if (error) setErr('Could not save that change.')
     load()
   }
@@ -86,6 +92,12 @@ export default function Schedule() {
           <label className="flex items-start gap-3 rounded-xl border border-cream/15 p-3">
             <input type="checkbox" className="mt-0.5 size-6 accent-rose" checked={mode === 'simple'} onChange={(e) => setMode(e.target.checked)} />
             <span className="text-sm">Simple rules for this day<br /><span className="text-xs text-cream/60">Ignores the tier time limits (like November). Unchecked = the December tier table applies.</span></span>
+          </label>
+        )}
+        {todays.length > 0 && (
+          <label className="flex items-start gap-3 rounded-xl border border-cream/15 p-3">
+            <input type="checkbox" className="mt-0.5 size-6 accent-rose" checked={rolling} onChange={(e) => setRolling(e.target.checked)} />
+            <span className="text-sm">Release gradually, two weeks at a time<br /><span className="text-xs text-cream/60">Like November. Clients only see this date once it is within the days set in Settings. Unchecked = always visible (like December).</span></span>
           </label>
         )}
         <ErrorText>{err}</ErrorText>

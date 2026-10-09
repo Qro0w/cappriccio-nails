@@ -1,30 +1,44 @@
 import { useState } from 'react'
-import { POLICIES } from '../lib/content'
-import { Btn, Card } from './ui'
+import { POLICIES, POLICY_INTRO } from '../lib/content'
+import { Btn } from './ui'
+import Collapsible from './Collapsible'
+import Rich, { RichList } from './Rich'
 
 export default function PolicyGate({ onAgree }) {
+  const [open, setOpen] = useState(0)
+  const [seen, setSeen] = useState(() => new Set([0]))
   const [ok, setOk] = useState(false)
+  const all = seen.size === POLICIES.length
+
+  function toggle(i) {
+    setOpen(open === i ? null : i)
+    setSeen((s) => new Set(s).add(i))
+  }
+
   return (
-    <div className="space-y-3">
-      <h1 className="font-display text-3xl font-bold">Before you book</h1>
-      <p className="text-sm text-cream/70">Please read these so there are no surprise fees on the day.</p>
+    <div className="space-y-3 pb-4">
+      <h1 className="font-display text-3xl font-bold">Policies</h1>
+      <p className="text-sm text-cream/75">{POLICY_INTRO}</p>
+
       {POLICIES.map((g, i) => (
-        <Card key={g.title} className="!p-0">
-          <details open={i < 2} className="group">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-semibold text-peach">
-              {g.title}<span className="text-cream/50 transition group-open:rotate-180">⌄</span>
-            </summary>
-            <ul className="list-disc space-y-1.5 px-8 pb-4 text-[13px] leading-snug text-cream/85">
-              {g.items.map((t) => <li key={t}>{t}</li>)}
-            </ul>
-          </details>
-        </Card>
+        <Collapsible key={g.title} title={g.title} sub={g.teaser} open={open === i} onToggle={() => toggle(i)}
+          right={seen.has(i) && open !== i ? <span className="text-emerald-300">✓</span> : null}>
+          <RichList items={g.items} />
+          {g.footnote && <p className="mt-3 text-xs text-cream/70"><Rich text={g.footnote} /></p>}
+          {i < POLICIES.length - 1 && (
+            <Btn variant="ghost" className="mt-4 w-full !min-h-11 text-sm" onClick={() => toggle(i + 1)}>Next: {POLICIES[i + 1].title}</Btn>
+          )}
+        </Collapsible>
       ))}
-      <label className="flex items-start gap-3 rounded-2xl border border-rose/40 bg-ink/50 p-4">
-        <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} className="mt-0.5 size-6 shrink-0 accent-rose" />
-        <span className="text-sm">I have read and agree to the rules and policies above.</span>
-      </label>
-      <Btn className="w-full" disabled={!ok} onClick={onAgree}>Continue</Btn>
+
+      <div className="sticky bottom-3 space-y-2 rounded-2xl border border-rose/40 bg-ink/95 p-3 backdrop-blur">
+        {!all && <p className="text-center text-xs text-cream/70">Open each section to continue ({seen.size}/{POLICIES.length})</p>}
+        <label className={`flex items-start gap-3 ${all ? '' : 'opacity-40'}`}>
+          <input type="checkbox" disabled={!all} checked={ok} onChange={(e) => setOk(e.target.checked)} className="mt-0.5 size-6 shrink-0 accent-rose" />
+          <span className="text-sm">I have read and agree to the Policies.</span>
+        </label>
+        <Btn className="w-full" disabled={!ok} onClick={onAgree}>Continue</Btn>
+      </div>
     </div>
   )
 }
