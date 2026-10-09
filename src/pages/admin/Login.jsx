@@ -21,7 +21,8 @@ export default function Login() {
   return (
     <Shell>
       <form onSubmit={submit} className="space-y-3">
-        <h1 className="text-center font-display text-3xl font-bold">Nailtech login</h1>
+        <h1 className="text-center font-display text-3xl font-bold">HAVE GOOD DAY TODAY BABU</h1>
+        <h1 className="text-center font-display text-3xl font-bold">I LOVE YOU</h1>
         <Field label="Email"><input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></Field>
         <Field label="Password"><input className={inputCls} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></Field>
         <ErrorText>{err}</ErrorText>
