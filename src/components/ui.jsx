@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { STATUS } from '../lib/config'
 
@@ -29,14 +30,16 @@ export const Field = ({ label, hint, children }) => (
   </label>
 )
 
-export function Shell({ children, wide = false }) {
+export function Shell({ children, wide = false, hideHeader = false }) {
   return (
     <div className={`mx-auto min-h-dvh px-4 pb-16 pt-4 ${wide ? 'max-w-3xl' : 'max-w-md'}`}>
-      <header className="mb-5 text-center">
-        <Link to="/" className="font-display text-3xl font-bold tracking-wide text-cream">
-          Cappriccio <span className="text-rose">Nails</span>
-        </Link>
-      </header>
+      {!hideHeader && (
+        <header className="mb-5 text-center">
+          <Link to="/" className="font-display text-3xl font-bold tracking-wide text-cream">
+            Cappriccio <span className="text-rose">Nails</span>
+          </Link>
+        </header>
+      )}
       {children}
     </div>
   )
@@ -67,3 +70,30 @@ export function ConfirmDialog({ open, title, body, confirmLabel = 'Yes, continue
 
 export const ErrorText = ({ children }) =>
   children ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">{children}</p> : null
+
+export const BackLink = ({ to, onClick, children = 'Back' }) =>
+  to ? (
+    <Link to={to} className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← {children}</Link>
+  ) : (
+    <button type="button" onClick={onClick} className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← {children}</button>
+  )
+
+export const Switch = ({ checked, onChange, label, disabled }) => (
+  <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} onClick={() => onChange(!checked)}
+    className={`relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-40 ${checked ? 'bg-rose' : 'bg-cream/20'}`}>
+    <span className={`absolute top-1 size-6 rounded-full bg-ink transition-all ${checked ? 'left-7' : 'left-1'}`} />
+  </button>
+)
+
+export function CopyButton({ text, label = 'Copy', className = '' }) {
+  const [done, setDone] = useState(false)
+  async function copy() {
+    try { await navigator.clipboard.writeText(text) } catch {
+      const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select()
+      try { document.execCommand('copy') } catch { /* ignore */ }
+      t.remove()
+    }
+    setDone(true); setTimeout(() => setDone(false), 1800)
+  }
+  return <Btn variant="soft" className={`!min-h-11 px-4 text-sm ${className}`} onClick={copy}>{done ? '✓ Copied' : `⧉ ${label}`}</Btn>
+}

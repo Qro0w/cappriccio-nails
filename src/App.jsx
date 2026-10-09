@@ -2,6 +2,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from './pages/client/Home'
 import Book from './pages/client/Book'
 import MyBooking from './pages/client/MyBooking'
+import Policies from './pages/client/Policies'
+import ForgotCode from './pages/client/ForgotCode'
+import Photos from './pages/admin/Photos'
 import AdminLayout from './pages/admin/AdminLayout'
 import Login from './pages/admin/Login'
 import Dashboard from './pages/admin/Dashboard'
@@ -18,11 +21,14 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<Book />} />
         <Route path="/my-booking" element={<MyBooking />} />
+        <Route path="/policies" element={<Policies />} />
+        <Route path="/forgot-code" element={<ForgotCode />} />
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="booking/:id" element={<BookingDetail />} />
           <Route path="schedule" element={<Schedule />} />
+          <Route path="photos" element={<Photos />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { fmtCountdown } from '../lib/format'
 
 export default function Countdown({ expiresAt, onExpire, className = '' }) {
   const target = new Date(expiresAt).getTime()
@@ -19,12 +20,10 @@ export default function Countdown({ expiresAt, onExpire, className = '' }) {
     }
   }, [left, onExpire])
 
-  const s = Math.floor(left / 1000)
-  const pad = (n) => String(n).padStart(2, '0')
-  const urgent = left < 60 * 60 * 1000
+  const urgent = left < 3 * 3600 * 1000
   return (
     <span className={`font-mono font-semibold tabular-nums ${urgent ? 'text-red-300' : 'text-peach'} ${className}`}>
-      {pad(Math.floor(s / 3600))}:{pad(Math.floor((s % 3600) / 60))}:{pad(s % 60)}
+      {fmtCountdown(left)}
     </span>
   )
 }

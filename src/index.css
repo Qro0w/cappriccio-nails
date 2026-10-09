@@ -11,6 +11,8 @@
   --font-body: "Inter", system-ui, sans-serif;
 }
 
+html { background: #0d0809; }
+
 body {
   margin: 0;
   min-height: 100dvh;

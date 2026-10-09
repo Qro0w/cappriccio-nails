@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
-import { ACTIVE } from '../../lib/config'
+import { ACTIVE, HISTORY_FILTERS } from '../../lib/config'
 import { fmtDateLong, fmtTime, ymd } from '../../lib/format'
-import { Card } from '../../components/ui'
+import { Card, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import BookingRow from '../../components/BookingRow'
 
@@ -14,7 +14,8 @@ export default function Dashboard() {
   const [rows, setRows] = useState(null)
   const [slots, setSlots] = useState([])
   const [view, setView] = useState('calendar')
-  const [filter, setFilter] = useState('action')
+  const [filter, setFilter] = useState('all')
+  const [q, setQ] = useState('')
   const [month, setMonth] = useState(startOfMonth(new Date()))
   const [day, setDay] = useState(ymd(new Date()))
 
@@ -40,14 +41,20 @@ export default function Dashboard() {
     return m
   }, [rows])
 
-  const list = useMemo(() => {
-    const all = rows || []
-    if (filter === 'action') return all.filter((r) => NEEDS_ACTION.includes(r.status))
-    if (filter === 'upcoming') return all.filter((r) => ACTIVE.includes(r.status) && r.slot_date >= today)
-    return [...all].reverse()
-  }, [rows, filter, today])
+  const upcoming = useMemo(() => (rows || []).filter((r) => ACTIVE.includes(r.status) && r.slot_date >= today), [rows, today])
 
-  // Day timeline: every open slot + any booked time
+  const history = useMemo(() => {
+    const st = HISTORY_FILTERS.find((f) => f[0] === filter)?.[2]
+    const needle = q.trim().toLowerCase().replace(/^@/, '')
+    return [...(rows || [])].reverse().filter((r) =>
+      (!st || st.includes(r.status)) &&
+      (!needle || [r.full_name, r.instagram, r.phone, r.code].some((v) => v.toLowerCase().includes(needle))))
+  }, [rows, filter, q])
+  const countFor = (key) => {
+    const st = HISTORY_FILTERS.find((f) => f[0] === key)?.[2]
+    return (rows || []).filter((r) => !st || st.includes(r.status)).length
+  }
+
   const dayTimes = useMemo(() => {
     const t = new Set(slots.filter((s) => s.slot_date === day).map((s) => s.slot_time))
     ;(byDay[day] || []).forEach((b) => t.add(b.slot_time))
@@ -59,7 +66,7 @@ export default function Dashboard() {
   const seg = (on) => `min-h-11 flex-1 rounded-lg text-sm font-semibold ${on ? 'bg-rose text-ink' : 'text-cream/70'}`
   return (
     <div className="space-y-4">
-      <button onClick={() => { setView('list'); setFilter('action') }}
+      <button onClick={() => { setView('history'); setFilter('payment_submitted') }}
         className={`w-full rounded-2xl border p-4 text-left ${action.length ? 'border-amber-300/50 bg-amber-400/10' : 'border-cream/10 bg-wine/60'}`}>
         <div className="text-2xl font-bold">{action.length}</div>
         <div className="text-sm text-cream/80">{action.length ? 'booking(s) need your attention (tap to view)' : 'Nothing needs your attention 🎉'}</div>
@@ -67,7 +74,8 @@ export default function Dashboard() {
 
       <div className="flex gap-1 rounded-xl bg-ink/60 p-1">
         <button className={seg(view === 'calendar')} onClick={() => setView('calendar')}>Calendar</button>
-        <button className={seg(view === 'list')} onClick={() => setView('list')}>All bookings</button>
+        <button className={seg(view === 'upcoming')} onClick={() => setView('upcoming')}>Upcoming</button>
+        <button className={seg(view === 'history')} onClick={() => setView('history')}>History</button>
       </div>
 
       {view === 'calendar' && (
@@ -94,15 +102,26 @@ export default function Dashboard() {
         </>
       )}
 
-      {view === 'list' && (
+      {view === 'upcoming' && (
         <div className="space-y-3">
-          <div className="flex gap-1 rounded-xl bg-ink/60 p-1">
-            <button className={seg(filter === 'action')} onClick={() => setFilter('action')}>Needs action</button>
-            <button className={seg(filter === 'upcoming')} onClick={() => setFilter('upcoming')}>Upcoming</button>
-            <button className={seg(filter === 'all')} onClick={() => setFilter('all')}>All</button>
+          {upcoming.length === 0 && <p className="py-6 text-center text-sm text-cream/60">No upcoming bookings.</p>}
+          {upcoming.map((b) => <BookingRow key={b.id} b={b} showDate onExpire={load} />)}
+        </div>
+      )}
+
+      {view === 'history' && (
+        <div className="space-y-3">
+          <input className={inputCls} placeholder="Search name, @instagram, phone or code" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+            {HISTORY_FILTERS.map(([key, label]) => (
+              <button key={key} onClick={() => setFilter(key)}
+                className={`min-h-10 shrink-0 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-rose bg-rose text-ink' : 'border-cream/25 text-cream/80'}`}>
+                {label} <span className="opacity-70">{countFor(key)}</span>
+              </button>
+            ))}
           </div>
-          {list.length === 0 && <p className="py-6 text-center text-sm text-cream/60">Nothing here.</p>}
-          {list.map((b) => <BookingRow key={b.id} b={b} showDate onExpire={load} />)}
+          {history.length === 0 && <p className="py-6 text-center text-sm text-cream/60">Nothing here.</p>}
+          {history.map((b) => <BookingRow key={b.id} b={b} showDate onExpire={load} />)}
         </div>
       )}
     </div>

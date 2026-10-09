@@ -7,15 +7,15 @@ export default function Calendar({ month, onMonth, selected, onSelect, badge, is
   const days = eachDayOfInterval({ start: startOfWeek(startOfMonth(month)), end: endOfWeek(endOfMonth(month)) })
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <button onClick={() => onMonth(addMonths(month, -1))} aria-label="Previous month" className="size-11 rounded-full text-xl hover:bg-cream/10">‹</button>
         <div className="font-display text-xl font-bold">{format(month, 'MMMM yyyy')}</div>
         <button onClick={() => onMonth(addMonths(month, 1))} aria-label="Next month" className="size-11 rounded-full text-xl hover:bg-cream/10">›</button>
       </div>
-      <div className="mb-1 grid grid-cols-7 text-center text-xs text-cream/50">
+      <div className="mb-2 grid grid-cols-7 text-center text-xs text-cream/50">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i}>{d}</div>)}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {days.map((d) => {
           const key = format(d, 'yyyy-MM-dd')
           if (!isSameMonth(d, month)) return <div key={key} />

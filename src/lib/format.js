@@ -13,3 +13,13 @@ export const cleanIg = (v) =>
   '@' + v.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?].*$/, '').replace(/^@/, '')
 export const cleanPhone = (v) => v.replace(/[\s-]/g, '')
 export const validPhone = (v) => /^(09|\+639|639)\d{9}$/.test(cleanPhone(v))
+
+// "1 Day, 03:24:13"  /  "2 Days, 00:10:05"  /  "03:24:13"
+export function fmtCountdown(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000))
+  const d = Math.floor(s / 86400)
+  const p = (n) => String(n).padStart(2, '0')
+  const clock = `${p(Math.floor((s % 86400) / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`
+  return d > 0 ? `${d} ${d === 1 ? 'Day' : 'Days'}, ${clock}` : clock
+}
+export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))

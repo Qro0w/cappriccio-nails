@@ -1,5 +1,6 @@
 // ---- Business constants. Change things here, not all over the app. ----
 export const IG_URL = 'https://www.instagram.com/cappriccio.nails'
+export const IG_DM_URL = 'https://ig.me/m/cappriccio.nails'
 export const IG_HANDLE = '@cappriccio.nails'
 export const CANCEL_CUTOFF_HOURS = 72 // client can self-cancel only if MORE than this many hours remain
 
@@ -61,4 +62,28 @@ export const STATUS = {
 }
 export const ACTIVE = ['awaiting_payment', 'payment_submitted', 'confirmed']
 
-export const PRESET_TIMES = ['09:00', '11:00', '12:00', '13:00', '14:30', '16:00', '17:00']
+export const HISTORY_FILTERS = [
+  ['all', 'All', null],
+  ['awaiting_payment', 'Unpaid', ['awaiting_payment']],
+  ['payment_submitted', 'Pending', ['payment_submitted']],
+  ['confirmed', 'Confirmed', ['confirmed']],
+  ['completed', 'Completed', ['completed']],
+  ['cancelled', 'Cancelled', ['cancelled']],
+  ['rejected', 'Rejected', ['rejected']],
+  ['expired', 'Expired', ['expired']],
+  ['no_show', 'No show', ['no_show']],
+]
+export const FINISHED = ['completed', 'cancelled', 'rejected', 'expired', 'no_show']
+
+export const ALL_TIMES = ['09:00', '11:00', '12:00', '13:00', '14:30', '16:00', '17:00']
+export const SLOT_PRESETS = {
+  'Dec 4 slots': ['09:00', '12:00', '14:30', '17:00'],
+  'Dec 3 slots': ['11:00', '14:30', '17:00'],
+  'Nov 3 slots': ['09:00', '13:00', '16:00'],
+  'Nov 2 slots': ['12:00', '16:00'],
+}
+export const RULESET_LABEL = {
+  sheet: 'Service rules from the sheet',
+  nov_test: 'November test run (tier does not limit times)',
+}
+export const TIER_COUNT = 4

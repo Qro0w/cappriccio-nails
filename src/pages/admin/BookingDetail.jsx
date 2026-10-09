@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { parseISO, startOfMonth } from 'date-fns'
-import { supabase } from '../../lib/supabase'
-import { ACTIVE, REMOVALS, SERVICES } from '../../lib/config'
+import { supabase, publicUrl } from '../../lib/supabase'
+import { ACTIVE, FINISHED, REMOVALS, SERVICES } from '../../lib/config'
 import { fmtDate, fmtDateLong, fmtTime, peso, ymd } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, StatusBadge, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import Countdown from '../../components/Countdown'
+import Lightbox from '../../components/Lightbox'
 
 function Reschedule({ b, onMoved }) {
   const [open, setOpen] = useState(false)
@@ -69,8 +70,11 @@ function Reschedule({ b, onMoved }) {
 
 export default function BookingDetail() {
   const { id } = useParams()
+  const nav = useNavigate()
+  const [view, setView] = useState(null)
+  const [delOpen, setDelOpen] = useState(false)
+  const [delText, setDelText] = useState('')
   const [b, setB] = useState(null)
-  const [receipt, setReceipt] = useState(null)
   const [price, setPrice] = useState('')
   const [note, setNote] = useState('')
   const [dlg, setDlg] = useState(null)
@@ -80,12 +84,11 @@ export default function BookingDetail() {
 
   const load = useCallback(async () => {
     await supabase.rpc('expire_stale')
-    const { data } = await supabase.from('bookings').select('*').eq('id', id).single()
-    setB(data); setPrice(data?.final_price ?? ''); setNote(data?.admin_note ?? '')
-    if (data?.receipt_path) {
-      const s = await supabase.storage.from('receipts').createSignedUrl(data.receipt_path, 3600)
-      setReceipt(s.data?.signedUrl || null)
-    } else setReceipt(null)
+    const [{ data }, n] = await Promise.all([
+      supabase.from('bookings').select('*').eq('id', id).single(),
+      supabase.from('booking_notes').select('note').eq('booking_id', id).maybeSingle(),
+    ])
+    setB(data); setPrice(data?.final_price ?? ''); setNote(n.data?.note ?? '')
   }, [id])
   useEffect(() => { load() }, [load])
 
@@ -109,10 +112,32 @@ export default function BookingDetail() {
   }
   async function saveExtras() {
     setErr(''); setMsg('')
-    const { error } = await supabase.from('bookings')
-      .update({ final_price: price === '' ? null : Number(price), admin_note: note.trim() || null }).eq('id', b.id)
-    if (error) return setErr('Could not save.')
+    const r1 = await supabase.from('bookings').update({ final_price: price === '' ? null : Number(price) }).eq('id', b.id)
+    const r2 = note.trim()
+      ? await supabase.from('booking_notes').upsert({ booking_id: b.id, note: note.trim(), updated_at: new Date().toISOString() })
+      : await supabase.from('booking_notes').delete().eq('booking_id', b.id)
+    if (r1.error || r2.error) return setErr('Could not save.')
     setMsg('Saved ✓'); load()
+  }
+
+  const receipt = b.receipt_path ? publicUrl('receipts', b.receipt_path) : null
+  const canDelete = FINISHED.includes(b.status)
+
+  async function hardDelete() {
+    setBusy(true); setErr('')
+    // 1. every receipt file for this booking (a client may have uploaded more than one)
+    const list = await supabase.storage.from('receipts').list(b.code, { limit: 100 })
+    const paths = (list.data || []).map((f) => `${b.code}/${f.name}`)
+    if (b.receipt_path && !paths.includes(b.receipt_path)) paths.push(b.receipt_path)
+    if (paths.length) {
+      const rm = await supabase.storage.from('receipts').remove(paths)
+      if (rm.error) { setBusy(false); return setErr('Could not delete the receipt files, so nothing was deleted. Please try again.') }
+    }
+    // 2. the booking itself (its private note is removed with it)
+    const { error } = await supabase.from('bookings').delete().eq('id', b.id)
+    setBusy(false)
+    if (error) return setErr('Could not delete the booking.')
+    nav('/admin', { replace: true })
   }
 
   const isActive = ACTIVE.includes(b.status)
@@ -128,12 +153,12 @@ export default function BookingDetail() {
 
   return (
     <div className="space-y-4">
-      <Link to="/admin" className="text-sm text-cream/60 underline">← Back to bookings</Link>
+      <Link to="/admin" className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back to bookings</Link>
       <Card className="space-y-1 text-center">
         <div className="font-display text-3xl font-bold">{b.full_name}</div>
-        <div className="font-mono text-xs text-cream/60">{b.code}</div>
+        <div className="break-all font-mono text-4xl font-bold tracking-wider text-rose">{b.code}</div>
         <div><StatusBadge status={b.status} /></div>
-        <div className="text-lg text-rose">{fmtDateLong(b.slot_date)} · {fmtTime(b.slot_time)}</div>
+        <div className="text-lg">{fmtDateLong(b.slot_date)} · {fmtTime(b.slot_time)}</div>
         {b.status === 'awaiting_payment' && <div className="pt-1">⏳ <Countdown expiresAt={b.expires_at} onExpire={load} className="text-2xl" /> left to pay</div>}
       </Card>
 
@@ -169,16 +194,43 @@ export default function BookingDetail() {
         <h2 className="font-semibold text-peach">Payment & price</h2>
         <div className="flex justify-between text-sm"><span className="text-cream/60">Estimated base total</span><span>{peso(b.estimated_price)}</span></div>
         <div className="flex justify-between text-sm"><span className="text-cream/60">Downpayment sent</span><span>{b.dp_amount != null ? peso(b.dp_amount) : 'None yet'}</span></div>
-        {receipt && <a href={receipt} target="_blank" rel="noreferrer"><img src={receipt} alt="GCash receipt" className="max-h-80 w-full rounded-xl object-contain bg-ink/60" /></a>}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-cream/60">Receipt</span>
+          <span className={receipt ? 'font-semibold text-emerald-200' : 'text-cream/60'}>{receipt ? '✓ Uploaded' : 'Not uploaded'}</span>
+        </div>
+        {receipt && <Btn variant="soft" className="w-full" onClick={() => setView(0)}>🧾 View receipt</Btn>}
         <Field label="Final price (₱)" hint="Leave blank to use the estimate. Clients can see this.">
           <input className={inputCls} inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))} placeholder={String(b.estimated_price)} />
         </Field>
-        <Field label="Private note"><textarea className={inputCls + ' min-h-20 py-2'} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+        <Field label="Private note" hint="Only you can see this. Clients never can."><textarea className={inputCls + ' min-h-20 py-2'} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
         <Btn className="w-full" onClick={saveExtras}>Save price & note</Btn>
         {msg && <p className="text-center text-sm text-emerald-200">{msg}</p>}
       </Card>
 
       {isActive && <Reschedule b={b} onMoved={load} />}
+
+      {canDelete && (
+        <Card className="space-y-2 border-red-400/30">
+          <h2 className="font-semibold text-red-200">Delete from history</h2>
+          <p className="text-xs text-cream/70">Permanently removes this booking, its receipt pictures and your private note. This can’t be undone.</p>
+          <Btn variant="danger" className="w-full" onClick={() => { setDelText(''); setDelOpen(true) }}>Delete permanently</Btn>
+        </Card>
+      )}
+
+      <Lightbox images={receipt ? [receipt] : []} index={view} onIndex={setView} onClose={() => setView(null)} />
+      {delOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <div className="w-full max-w-sm space-y-3 rounded-2xl border border-cream/15 bg-wine p-5">
+            <h3 className="font-display text-2xl font-bold">Delete permanently?</h3>
+            <p className="text-sm text-cream/80">{b.full_name}’s booking {b.code} and everything attached to it will be erased. Type <b>DELETE</b> to confirm.</p>
+            <input className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} autoCapitalize="characters" placeholder="DELETE" />
+            <div className="grid grid-cols-2 gap-2">
+              <Btn variant="ghost" onClick={() => setDelOpen(false)} disabled={busy}>Go back</Btn>
+              <Btn variant="danger" disabled={delText.trim().toUpperCase() !== 'DELETE' || busy} onClick={hardDelete}>{busy ? 'Deleting…' : 'Delete'}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog open={!!act} title={act?.title} body={act?.body} confirmLabel={act?.label} danger={act?.danger} busy={busy}
         onConfirm={runAction} onCancel={() => setDlg(null)} />

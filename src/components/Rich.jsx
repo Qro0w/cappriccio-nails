@@ -1,5 +1,7 @@
-// Tiny formatter for the doc's emphasis:  **bold**   //italic//   __underline__
-const TOKENS = [['**', 'strong'], ['//', 'em'], ['__', 'u']]
+// Tiny formatter for emphasis:  **bold** (gold)   !!warning!! (red)   //italic//   __underline__
+const TOKENS = [['**', 'strong'], ['!!', 'warn'], ['//', 'em'], ['__', 'u']]
+
+const Warn = ({ children }) => <strong className="rounded bg-red-500/20 px-1 font-bold text-red-300">{children}</strong>
 
 function parse(text, depth = 0) {
   let best = null
@@ -9,7 +11,7 @@ function parse(text, depth = 0) {
   }
   if (!best) return text
   const end = text.indexOf(best.tok, best.i + 2)
-  const Tag = best.tag
+  const Tag = best.tag === 'warn' ? Warn : best.tag
   return [
     text.slice(0, best.i),
     <Tag key={`${depth}-${best.i}`}>{parse(text.slice(best.i + 2, end), depth + 1)}</Tag>,
@@ -24,7 +26,7 @@ export default function Rich({ text }) {
 // A bullet list that supports one level of sub-bullets: items are strings or { text, sub: [...] }
 export function RichList({ items, className = '' }) {
   return (
-    <ul className={`list-disc space-y-2 pl-5 text-[13px] leading-snug text-cream/80 [&_strong]:font-bold [&_strong]:text-cream ${className}`}>
+    <ul className={`list-disc space-y-2 pl-5 text-[13px] leading-snug text-cream/80 [&_strong]:font-bold [&_strong]:text-peach ${className}`}>
       {items.map((it, n) =>
         typeof it === 'string' ? (
           <li key={n}><Rich text={it} /></li>

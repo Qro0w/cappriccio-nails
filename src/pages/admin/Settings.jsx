@@ -6,8 +6,7 @@ const FIELDS = [
   ['gcash_number', 'GCash number', 'Shown to clients after they book'],
   ['gcash_name', 'GCash account name', ''],
   ['min_dp', 'Minimum downpayment (₱)', ''],
-  ['hold_hours', 'Hours to pay the downpayment', 'Applies to NEW bookings only'],
-  ['window_days', 'Release window (days ahead)', 'Only for dates marked "Release gradually" in Schedule (November: two weeks). Other dates are always visible.'],
+  ['hold_hours', 'Hours to pay the downpayment', 'Counted from the moment the client reserves. Applies to NEW bookings only'],
 ]
 
 export default function Settings() {

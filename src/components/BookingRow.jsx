@@ -20,7 +20,8 @@ export default function BookingRow({ b, showDate = false, onExpire }) {
       <div className="flex flex-wrap items-center gap-x-3 text-xs">
         {b.age < 15 && <span className="font-semibold text-amber-300">⚑ Under 15</span>}
         {b.status === 'awaiting_payment' && <span>⏳ <Countdown expiresAt={b.expires_at} onExpire={onExpire} /> left to pay</span>}
-        {b.status === 'payment_submitted' && <span className="text-sky-200">🧾 Receipt uploaded. Needs your check</span>}
+        {b.status === 'payment_submitted' && <span className="text-sky-200">🧾 Receipt uploaded, needs your check</span>}
+        {b.receipt_path && b.status !== 'payment_submitted' && <span className="text-cream/60">🧾 Receipt on file</span>}
       </div>
     </Link>
   )
