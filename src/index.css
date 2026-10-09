@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0d0809;
+  --color-wine: #3a0d14;
+  --color-maroon: #6b0f1a;
+  --color-cream: #ffe9c4;
+  --color-peach: #ffd3a8;
+  --color-rose: #f6a5b0;
+  --font-display: "Cormorant Garamond", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  background: radial-gradient(ellipse at 50% 40%, #3a0d14 0%, #0d0809 70%) fixed;
+}
