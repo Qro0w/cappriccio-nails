@@ -15,7 +15,7 @@ export default function Login() {
     setBusy(true); setErr('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
-    if (error) return setErr('Wrong email or password.')
+    if (error) return setErr(error.message)
     nav('/admin', { replace: true })
   }
   return (
