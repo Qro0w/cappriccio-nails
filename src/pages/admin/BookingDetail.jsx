@@ -22,7 +22,7 @@ function Reschedule({ b, onMoved }) {
     if (!open) return
     ;(async () => {
       const [s, t] = await Promise.all([
-        supabase.from('schedule_slots').select('slot_date,slot_time').gte('slot_date', ymd(new Date())).order('slot_date').order('slot_time'),
+        supabase.from('schedule_slots').select('slot_date,slot_time').eq('is_open', true).gte('slot_date', ymd(new Date())).order('slot_date').order('slot_time'),
         supabase.from('bookings').select('slot_date,slot_time').in('status', ACTIVE),
       ])
       const taken = new Set((t.data || []).map((x) => `${x.slot_date}|${x.slot_time}`))

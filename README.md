@@ -21,3 +21,10 @@ If you are developing a production application, we recommend using TypeScript wi
 2. Replace the project's `src/` folder with the one from the zip (delete the old `src` first), copy `supabase/06_upgrade_v4.sql` in, push to GitHub. Vercel redeploys by itself. Env vars are unchanged.
 3. Open /admin once and sign in (stays signed in). Photos tab: add tier photos. Settings: check GCash number/location. Schedule: turn December on when ready.
 Fresh Supabase project instead? Run 01, 02, 03, then 06.
+
+---
+## v6 update (warm look, closed/removable slots, 12-hour downpayment)
+1. Supabase > SQL Editor, run each file once, in order (skip any you already ran):
+   `06_upgrade_v4.sql` → `07_presets.sql` → `08_update_v6.sql`
+2. Replace `src/` and `index.html` with the ones from the zip, add the `supabase/` files, push to GitHub. Vercel redeploys.
+Fresh Supabase project: run 01, 02, 03, 06, 07, 08.

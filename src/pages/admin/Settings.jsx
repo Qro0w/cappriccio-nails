@@ -6,7 +6,6 @@ const FIELDS = [
   ['gcash_number', 'GCash number', 'Shown to clients after they book'],
   ['gcash_name', 'GCash account name', ''],
   ['min_dp', 'Minimum downpayment (₱)', ''],
-  ['hold_hours', 'Hours to pay the downpayment', 'Counted from the moment the client reserves. Applies to NEW bookings only'],
 ]
 
 export default function Settings() {
@@ -21,7 +20,7 @@ export default function Settings() {
 
   async function save() {
     setMsg(''); setErr('')
-    const rows = Object.entries(v).map(([key, value]) => ({ key, value: String(value) }))
+    const rows = Object.entries(v).filter(([key]) => key !== 'hold_hours').map(([key, value]) => ({ key, value: String(value) }))
     const { error } = await supabase.from('settings').upsert(rows)
     if (error) setErr('Could not save.')
     else setMsg('Saved ✓')
@@ -36,6 +35,7 @@ export default function Settings() {
         <Field label="Location message" hint="Only shown to clients AFTER you confirm their payment">
           <textarea className={inputCls + ' min-h-24 py-2'} value={v.location_text ?? ''} onChange={(e) => setV({ ...v, location_text: e.target.value })} />
         </Field>
+        <p className="text-xs text-cream/60">Clients have a fixed 12 hours from reserving to pay the downpayment.</p>
         <ErrorText>{err}</ErrorText>
         <Btn className="w-full" onClick={save}>Save settings</Btn>
         {msg && <p className="text-center text-sm text-emerald-200">{msg}</p>}

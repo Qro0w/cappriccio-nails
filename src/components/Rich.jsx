@@ -1,7 +1,7 @@
 // Tiny formatter for emphasis:  **bold** (gold)   !!warning!! (red)   //italic//   __underline__
 const TOKENS = [['**', 'strong'], ['!!', 'warn'], ['//', 'em'], ['__', 'u']]
 
-const Warn = ({ children }) => <strong className="rounded bg-red-500/20 px-1 font-bold text-red-300">{children}</strong>
+const Warn = ({ children }) => <strong className="rounded bg-red-500/25 px-1 font-bold text-red-200">{children}</strong>
 
 function parse(text, depth = 0) {
   let best = null

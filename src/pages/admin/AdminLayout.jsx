@@ -16,7 +16,7 @@ export default function AdminLayout() {
   const tab = ({ isActive }) => `flex min-h-14 flex-1 items-center justify-center text-xs font-semibold ${isActive ? 'text-rose' : 'text-cream/60'}`
   return (
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-4">
-      <header className="mb-4 text-center font-display text-2xl font-bold">Cappriccio <span className="text-rose">Nails</span> <span className="text-sm font-normal text-cream/50">· admin</span></header>
+      <header className="mb-4 text-center font-display text-2xl font-bold text-cream">Cappriccio <span className="italic text-rose">Nails</span></header>
       <Outlet />
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-cream/10 bg-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto flex max-w-2xl">

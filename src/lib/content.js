@@ -5,13 +5,13 @@
 //  Change a sentence here and nowhere else.
 //
 //  NOTE (deliberate difference from the doc): the doc says the down payment must be paid
-//  within 24 hours. The nailtech asked for 72 hours counted from the moment of reserving.
+//  within 24 hours. The nailtech asked for a fixed 12 hours counted from the moment of reserving.
 //  Change it here AND in Admin > Settings ("Hours to pay the downpayment") if needed.
 //
 //  Bump POLICY_VERSION whenever the policies change: every client is then asked to agree again.
 // =====================================================================================
 
-export const POLICY_VERSION = '2026-10-v2'
+export const POLICY_VERSION = '2026-10-v3'
 export const policyAccepted = () => { try { return localStorage.getItem('cpn_policy_ok') === POLICY_VERSION } catch { return false } }
 export const savePolicyAccepted = () => { try { localStorage.setItem('cpn_policy_ok', POLICY_VERSION) } catch { /* ignore */ } }
 
@@ -35,7 +35,7 @@ export const POLICIES = [
       'Please do mention if you have any existing nail enhancements; //failure to do so will lead to an additional 80php fee on top of removal fees//',
       'Please inform me ahead if you are bringing a companion, and **the companion must arrive with you** to avoid interruptions',
       'Minimum down payment of __400php__ is required to book your slot',
-      '!!NO DOWNPAYMENT = NO APPOINTMENT.!! **Down payment must be paid strictly within 72 hours of booking**',
+      '!!NO DOWNPAYMENT = NO APPOINTMENT.!! **Down payment must be paid strictly within 12 hours of booking**',
       '!!Down payment is NON-REFUNDABLE!!',
       'DP is to be paid through GCash',
       'Balance can be paid through GCash or Cash',
@@ -183,6 +183,8 @@ export const RATES = {
 // ---------- Appointment form (doc "Flow of appointment form") ----------
 export const TIER_NOTE = 'Prices will still vary within tiers depending on exact design; for the exact price, message me directly.'
 export const AFTER_RESERVE = 'Please send photo of your design to @cappriccio.nails for full quotation.'
+// Extra reminder shown above the Instagram button on the client's booking page
+export const SEND_REMINDER = 'Please send **a photo of your design** and **a screenshot of your booking code** to @cappriccio.nails.'
 export const REMOVAL_NOTE =
   'Please do mention if you have any existing nail enhancements; //failure to do so will lead to an additional 80php fee on top of removal fees//'
 export const F_HARD_NOTE = 'Foreign Hard Gel removal only available for 5pm slots'

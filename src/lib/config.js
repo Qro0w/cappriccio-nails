@@ -51,13 +51,13 @@ export function calcPrice(service, length, removal, intensive) {
 }
 
 export const STATUS = {
-  awaiting_payment:  { label: 'Awaiting downpayment', cls: 'bg-amber-400/20 text-amber-200 border-amber-300/40' },
-  payment_submitted: { label: 'Receipt submitted',    cls: 'bg-sky-400/20 text-sky-200 border-sky-300/40' },
-  confirmed:         { label: 'Confirmed',            cls: 'bg-emerald-400/20 text-emerald-200 border-emerald-300/40' },
+  awaiting_payment:  { label: 'Awaiting downpayment', cls: 'bg-peach/10 text-peach border-peach/40' },
+  payment_submitted: { label: 'Receipt submitted',    cls: 'bg-rose/15 text-rose border-rose/40' },
+  confirmed:         { label: 'Confirmed',            cls: 'bg-teak/40 text-peach border-teak' },
   completed:         { label: 'Completed',            cls: 'bg-cream/10 text-cream/80 border-cream/30' },
   cancelled:         { label: 'Cancelled',            cls: 'bg-red-400/15 text-red-200 border-red-300/30' },
   rejected:          { label: 'Rejected',             cls: 'bg-red-400/15 text-red-200 border-red-300/30' },
-  expired:           { label: 'Expired',              cls: 'bg-cream/10 text-cream/60 border-cream/20' },
+  expired:           { label: 'Expired',              cls: 'bg-cream/5 text-cream/60 border-cream/20' },
   no_show:           { label: 'No show',              cls: 'bg-red-400/15 text-red-200 border-red-300/30' },
 }
 export const ACTIVE = ['awaiting_payment', 'payment_submitted', 'confirmed']
@@ -76,12 +76,6 @@ export const HISTORY_FILTERS = [
 export const FINISHED = ['completed', 'cancelled', 'rejected', 'expired', 'no_show']
 
 export const ALL_TIMES = ['09:00', '11:00', '12:00', '13:00', '14:30', '16:00', '17:00']
-export const SLOT_PRESETS = {
-  'Dec 4 slots': ['09:00', '12:00', '14:30', '17:00'],
-  'Dec 3 slots': ['11:00', '14:30', '17:00'],
-  'Nov 3 slots': ['09:00', '13:00', '16:00'],
-  'Nov 2 slots': ['12:00', '16:00'],
-}
 export const RULESET_LABEL = {
   sheet: 'Service rules from the sheet',
   nov_test: 'November test run (tier does not limit times)',

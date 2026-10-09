@@ -1,7 +1,7 @@
 // Controlled accordion row. Parent decides which one is open (so only one is open at a time).
 export default function Collapsible({ title, sub, right, open, onToggle, children, tone = 'card' }) {
   return (
-    <div className={tone === 'card' ? 'rounded-2xl border border-cream/10 bg-wine/60' : ''}>
+    <div className={tone === 'card' ? 'rounded-3xl border border-cream/10 bg-wine/60' : ''}>
       <button
         type="button"
         aria-expanded={open}

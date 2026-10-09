@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Original dark palette + a few warm accents (lamp glow, teak wood, cream boucle). */
 @theme {
   --color-ink: #0d0809;
   --color-wine: #3a0d14;
@@ -7,7 +8,8 @@
   --color-cream: #ffe9c4;
   --color-peach: #ffd3a8;
   --color-rose: #f6a5b0;
-  --font-display: "Cormorant Garamond", serif;
+  --color-teak: #8b4c25;
+  --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "Inter", system-ui, sans-serif;
 }
 
@@ -18,5 +20,32 @@ body {
   min-height: 100dvh;
   color: var(--color-cream);
   font-family: var(--font-body);
-  background: radial-gradient(ellipse at 50% 40%, #3a0d14 0%, #0d0809 70%) fixed;
+  /* soft lamp light from the top, then the original wine-to-ink glow */
+  background:
+    radial-gradient(42rem 18rem at 50% -6rem, rgb(255 196 110 / 0.16), transparent 70%),
+    radial-gradient(ellipse at 50% 40%, #3a0d14 0%, #0d0809 78%) fixed;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* warm lantern glow, used behind the logo on the landing page */
+.lamp-glow { background: radial-gradient(circle, rgb(255 200 120 / 0.40), rgb(255 170 90 / 0.12) 45%, rgb(255 170 90 / 0) 70%); }
+
+/* teak wood grain (thin bands only) */
+.wood {
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0), rgb(0 0 0 / 0.18) 40%, rgb(0 0 0 / 0) 70%, rgb(0 0 0 / 0.12)),
+    repeating-linear-gradient(90deg, #7a4220 0 3px, #8b4c25 3px 7px, #723c1c 7px 9px, #94552c 9px 14px);
+}
+
+/* cream boucle (selected tier, copy buttons) */
+.boucle {
+  background:
+    radial-gradient(circle at 30% 30%, rgb(255 255 255 / 0.55) 0 1.2px, transparent 1.6px) 0 0 / 6px 6px,
+    radial-gradient(circle at 70% 70%, rgb(160 120 80 / 0.18) 0 1.2px, transparent 1.6px) 0 0 / 7px 7px,
+    #f4e6cc;
+  color: #3a2419;
+}
+
+@keyframes phrase-in { from { opacity: 0; transform: translateY(8px); filter: blur(2px) } to { opacity: 1; transform: none; filter: none } }
+.phrase-in { animation: phrase-in 900ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .phrase-in { animation: none } }

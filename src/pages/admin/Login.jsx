@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { Btn, ErrorText, Field, Shell, inputCls } from '../../components/ui'
+import { Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
+import Phrases from '../../components/Phrases'
 
 export default function Login() {
   const nav = useNavigate()
@@ -20,14 +21,17 @@ export default function Login() {
   }
   return (
     <Shell>
+      <h1 className="sr-only">Nailtech login</h1>
+      <Phrases className="mb-6 mt-4" />
+      <Card>
       <form onSubmit={submit} className="space-y-3">
-        <h1 className="text-center font-display text-3xl font-bold">Nailtech login</h1>
         <p className="text-center text-xs text-cream/60">You stay signed in on this device until you tap Sign out.</p>
         <Field label="Email"><input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></Field>
         <Field label="Password"><input className={inputCls} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></Field>
         <ErrorText>{err}</ErrorText>
         <Btn type="submit" className="w-full" disabled={busy || !email || !password}>{busy ? 'Signing in…' : 'Sign in'}</Btn>
       </form>
+      </Card>
     </Shell>
   )
 }

@@ -4,7 +4,7 @@ import { supabase, publicUrl } from '../../lib/supabase'
 import { compressImage } from '../../lib/image'
 import { addMinutes, format } from 'date-fns'
 import { CANCEL_CUTOFF_HOURS, IG_DM_URL, IG_HANDLE, REMOVALS, SERVICES } from '../../lib/config'
-import { AFTER_RESERVE, CHANGE_LINES, reminders } from '../../lib/content'
+import { AFTER_RESERVE, CHANGE_LINES, SEND_REMINDER, reminders } from '../../lib/content'
 import { cleanPhone, fmtDateLong, fmtTime, hoursUntil, peso, uid } from '../../lib/format'
 import { BackLink, Btn, Card, ConfirmDialog, CopyButton, ErrorText, Field, Shell, StatusBadge, inputCls } from '../../components/ui'
 import Lightbox from '../../components/Lightbox'
@@ -74,7 +74,7 @@ function PaymentBox({ b, cfg, phone, onDone }) {
         </div>
       )}
       <p className="text-[13px] text-cream/80">Minimum down payment of <b>{peso(min)}</b> (you may pay more) via GCash. Screenshot your receipt and upload it here.</p>
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-ink/50 p-3">
+      <div className="flex items-center justify-between gap-2 rounded-2xl bg-ink/50 p-3">
         <div>
           <div className="text-xs text-cream/60">GCash · {cfg?.gcash_name}</div>
           <div className="text-lg font-semibold tracking-wide">{cfg?.gcash_number}</div>
@@ -82,7 +82,7 @@ function PaymentBox({ b, cfg, phone, onDone }) {
         <CopyButton text={(cfg?.gcash_number || '').replace(/\s/g, '')} />
       </div>
       {qrBad ? (
-        <div className="flex aspect-square max-w-48 items-center justify-center rounded-xl bg-ink/50 text-xs text-cream/40">GCash QR (coming soon)</div>
+        <div className="flex aspect-square max-w-48 items-center justify-center rounded-2xl bg-ink/50 text-xs text-cream/40">GCash QR (coming soon)</div>
       ) : (
         <img src="/gcash-qr.png" alt="GCash QR code" onError={() => setQrBad(true)} className="max-w-48 rounded-xl bg-white p-2" />
       )}
@@ -128,7 +128,7 @@ export default function MyBooking() {
   }, [creds])
 
   useEffect(() => { load() }, [load])
-  useEffect(() => { supabase.rpc('get_public_settings').then(({ data }) => setCfg(data)) }, [])
+  useEffect(() => { supabase.rpc('get_public_settings').then(({ data }) => setCfg(data || {})) }, [])
 
   function found(c) { localStorage.setItem(STORE, JSON.stringify(c)); setCreds(c) }
   function forget() { localStorage.removeItem(STORE); setCreds(null); setB(null) }
@@ -176,18 +176,19 @@ export default function MyBooking() {
 
         {awaiting && (
           <Card className="space-y-1 border-amber-300/40 text-center">
-            <div className="text-xs text-amber-100">Time left to pay your down payment (72 hours from reserving)</div>
+            <div className="text-xs text-amber-200">Time left to pay your down payment (12 hours from reserving)</div>
             <Countdown expiresAt={b.expires_at} onExpire={load} className="text-3xl" />
             <div className="text-xs text-cream/80"><Rich text="!!NO DOWNPAYMENT = NO APPOINTMENT.!!" /> Upload your receipt before the timer ends or the slot is released.</div>
+            <Btn variant="soft" className="mt-2 w-full" onClick={() => document.getElementById('pay')?.scrollIntoView({ behavior: 'smooth' })}>🧾 Upload my receipt</Btn>
           </Card>
         )}
         {dead && (
           <Card className="space-y-2 text-center">
-            <p className="text-sm">{b.status === 'expired' ? 'The 72-hour downpayment window ended, so this slot was released.' : 'This booking is no longer active.'}</p>
+            <p className="text-sm">{b.status === 'expired' ? 'The 12-hour downpayment window ended, so this slot was released.' : 'This booking is no longer active.'}</p>
             <Btn as={Link} to="/book" className="w-full">Book again</Btn>
           </Card>
         )}
-        {open && cfg && <PaymentBox b={b} cfg={cfg} phone={creds.phone} onDone={load} />}
+        {open && <div id="pay" className="scroll-mt-4"><PaymentBox b={b} cfg={cfg || {}} phone={creds.phone} onDone={load} /></div>}
 
         {(b.status === 'confirmed' || b.status === 'completed') && (
           <Card className="space-y-3">
@@ -202,6 +203,7 @@ export default function MyBooking() {
         {!dead && b.status !== 'completed' && (
           <Card className="space-y-2 text-sm">
             <p>{AFTER_RESERVE}</p>
+            <p className="rounded-xl bg-ink/40 p-3 text-[13px]"><Rich text={SEND_REMINDER} /></p>
             <Btn as="a" href={IG_DM_URL} target="_blank" rel="noreferrer" variant="soft" className="w-full">Message on Instagram</Btn>
           </Card>
         )}
@@ -216,8 +218,10 @@ export default function MyBooking() {
         </Card>
 
         {(open || b.status === 'confirmed') && (
-          <Card className="space-y-3">
-            <h2 className="font-semibold text-peach">Reschedule or cancel</h2>
+          <Card className="!p-0">
+            <Collapsible tone="flat" title="Reschedule or cancel" sub={cancellable ? 'Cancelling forfeits your down payment' : 'Online cancellation is closed'}
+              open={sec === 'change'} onToggle={() => setSec(sec === 'change' ? null : 'change')}>
+            <div className="space-y-3">
             <RichList items={CHANGE_LINES} />
             <p className="text-xs text-cream/70">To reschedule, please message me on Instagram.</p>
             {cancellable ? (
@@ -230,6 +234,8 @@ export default function MyBooking() {
               </div>
             )}
             <ErrorText>{msg}</ErrorText>
+            </div>
+            </Collapsible>
           </Card>
         )}
         <div className="text-center"><button onClick={forget} className="text-xs text-cream/50 underline">Not you? Look up a different booking</button></div>

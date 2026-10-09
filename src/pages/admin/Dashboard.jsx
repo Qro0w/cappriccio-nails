@@ -6,6 +6,7 @@ import { fmtDateLong, fmtTime, ymd } from '../../lib/format'
 import { Card, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import BookingRow from '../../components/BookingRow'
+import Phrases from '../../components/Phrases'
 
 const SHOWN_IN_DAY = [...ACTIVE, 'completed', 'no_show']
 const NEEDS_ACTION = ['awaiting_payment', 'payment_submitted']
@@ -23,7 +24,7 @@ export default function Dashboard() {
     await supabase.rpc('expire_stale')
     const [b, s] = await Promise.all([
       supabase.from('bookings').select('*').order('slot_date').order('slot_time'),
-      supabase.from('schedule_slots').select('slot_date,slot_time').order('slot_date').order('slot_time'),
+      supabase.from('schedule_slots').select('slot_date,slot_time,is_open').order('slot_date').order('slot_time'),
     ])
     setRows(b.data || []); setSlots(s.data || [])
   }, [])
@@ -46,7 +47,8 @@ export default function Dashboard() {
   const history = useMemo(() => {
     const st = HISTORY_FILTERS.find((f) => f[0] === filter)?.[2]
     const needle = q.trim().toLowerCase().replace(/^@/, '')
-    return [...(rows || [])].reverse().filter((r) =>
+    const last = (r) => r.updated_at || r.created_at
+    return [...(rows || [])].sort((a, b) => (last(a) < last(b) ? 1 : -1)).filter((r) =>
       (!st || st.includes(r.status)) &&
       (!needle || [r.full_name, r.instagram, r.phone, r.code].some((v) => v.toLowerCase().includes(needle))))
   }, [rows, filter, q])
@@ -56,7 +58,7 @@ export default function Dashboard() {
   }
 
   const dayTimes = useMemo(() => {
-    const t = new Set(slots.filter((s) => s.slot_date === day).map((s) => s.slot_time))
+    const t = new Set(slots.filter((s) => s.slot_date === day && s.is_open !== false).map((s) => s.slot_time))
     ;(byDay[day] || []).forEach((b) => t.add(b.slot_time))
     return [...t].sort()
   }, [slots, byDay, day])
@@ -66,13 +68,14 @@ export default function Dashboard() {
   const seg = (on) => `min-h-11 flex-1 rounded-lg text-sm font-semibold ${on ? 'bg-rose text-ink' : 'text-cream/70'}`
   return (
     <div className="space-y-4">
+      <Phrases />
       <button onClick={() => { setView('history'); setFilter('payment_submitted') }}
-        className={`w-full rounded-2xl border p-4 text-left ${action.length ? 'border-amber-300/50 bg-amber-400/10' : 'border-cream/10 bg-wine/60'}`}>
+        className={`w-full rounded-2xl border p-4 text-left ${action.length ? 'border-peach/50 bg-peach/10' : 'border-cream/10 bg-wine/60'}`}>
         <div className="text-2xl font-bold">{action.length}</div>
         <div className="text-sm text-cream/80">{action.length ? 'booking(s) need your attention (tap to view)' : 'Nothing needs your attention 🎉'}</div>
       </button>
 
-      <div className="flex gap-1 rounded-xl bg-ink/60 p-1">
+      <div className="flex gap-1 rounded-2xl bg-cream/5 p-1">
         <button className={seg(view === 'calendar')} onClick={() => setView('calendar')}>Calendar</button>
         <button className={seg(view === 'upcoming')} onClick={() => setView('upcoming')}>Upcoming</button>
         <button className={seg(view === 'history')} onClick={() => setView('history')}>History</button>
@@ -86,7 +89,7 @@ export default function Dashboard() {
                 const n = (byDay[k] || []).length
                 if (!n) return null
                 const hot = (byDay[k] || []).some((r) => NEEDS_ACTION.includes(r.status))
-                return <span className={sel ? 'text-ink' : hot ? 'text-amber-300' : 'text-rose'}>● {n}</span>
+                return <span className={sel ? 'text-ink' : hot ? 'text-amber-200' : 'text-rose'}>● {n}</span>
               }} />
           </Card>
           <div className="space-y-2">
@@ -112,10 +115,10 @@ export default function Dashboard() {
       {view === 'history' && (
         <div className="space-y-3">
           <input className={inputCls} placeholder="Search name, @instagram, phone or code" value={q} onChange={(e) => setQ(e.target.value)} />
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          <div className="flex flex-wrap gap-2">
             {HISTORY_FILTERS.map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)}
-                className={`min-h-10 shrink-0 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-rose bg-rose text-ink' : 'border-cream/25 text-cream/80'}`}>
+                className={`min-h-10 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-rose bg-rose text-ink' : 'border-cream/25 text-cream/80'}`}>
                 {label} <span className="opacity-70">{countFor(key)}</span>
               </button>
             ))}

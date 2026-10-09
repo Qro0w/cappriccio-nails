@@ -22,7 +22,7 @@ export default function Countdown({ expiresAt, onExpire, className = '' }) {
 
   const urgent = left < 3 * 3600 * 1000
   return (
-    <span className={`font-mono font-semibold tabular-nums ${urgent ? 'text-red-300' : 'text-peach'} ${className}`}>
+    <span className={`font-mono font-semibold tabular-nums ${urgent ? 'text-red-200' : 'text-peach'} ${className}`}>
       {fmtCountdown(left)}
     </span>
   )

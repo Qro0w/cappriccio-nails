@@ -105,7 +105,7 @@ function Build({ form, setForm, onNext, onBack }) {
         </Card>
       </section>
 
-      <div className="sticky bottom-3 space-y-2 rounded-2xl border border-cream/10 bg-ink/95 p-3 backdrop-blur">
+      <div className="sticky bottom-3 space-y-2 rounded-2xl border border-cream/10 bg-ink/95 p-3 shadow-lg backdrop-blur">
         {price != null && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-cream/70">Estimated base total</span>
@@ -236,7 +236,7 @@ function Review({ form, pick, onBack, onTaken }) {
         <div className="flex justify-between border-t border-cream/10 pt-2 font-semibold"><span>Estimated base total</span><span className="text-rose">{peso(price)}</span></div>
       </Card>
       <Card className="space-y-2 text-[13px]">
-        <p><Rich text="!!NO DOWNPAYMENT = NO APPOINTMENT.!! **Down payment must be paid strictly within 72 hours of booking.**" /> Your 72 hours start the moment you reserve. Upload your receipt on the next page.</p>
+        <p><Rich text="!!NO DOWNPAYMENT = NO APPOINTMENT.!! **Down payment must be paid strictly within 12 hours of booking.**" /> Your 12 hours start the moment you reserve. Upload your receipt on the next page.</p>
         <p>{AFTER_RESERVE}</p>
       </Card>
       <ErrorText>{err}</ErrorText>

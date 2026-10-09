@@ -3,28 +3,28 @@ import { Link } from 'react-router-dom'
 import { STATUS } from '../lib/config'
 
 export const Card = ({ className = '', ...p }) => (
-  <div className={`rounded-2xl border border-cream/10 bg-wine/60 p-4 backdrop-blur ${className}`} {...p} />
+  <div className={`rounded-3xl border border-cream/10 bg-wine/60 p-5 backdrop-blur ${className}`} {...p} />
 )
 
 const VARIANTS = {
-  primary: 'bg-maroon text-cream border border-rose/30 hover:bg-maroon/80',
-  soft: 'bg-rose text-ink hover:bg-rose/85',
-  ghost: 'border border-cream/25 text-cream hover:bg-cream/10',
-  danger: 'bg-red-800 text-white hover:bg-red-700',
+  primary: 'bg-rose text-ink shadow-[0_3px_0_#b8707c] active:translate-y-0.5 active:shadow-none hover:bg-rose/90',
+  soft: 'boucle shadow-[0_3px_0_#b89a72] active:translate-y-0.5 active:shadow-none',
+  ghost: 'border-[1.5px] border-cream/15 bg-ink/35 text-cream hover:bg-cream/5',
+  danger: 'bg-red-700 text-white hover:bg-red-600',
 }
 export const Btn = ({ variant = 'primary', className = '', as: As = 'button', ...p }) => (
   <As
-    className={`inline-flex min-h-12 items-center justify-center rounded-xl px-4 text-center font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
+    className={`inline-flex min-h-12 items-center justify-center rounded-2xl px-5 text-center font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
     {...p}
   />
 )
 
 export const inputCls =
-  'w-full min-h-12 rounded-xl border border-cream/20 bg-ink/60 px-3 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
+  'w-full min-h-12 rounded-2xl border border-cream/20 bg-ink/60 px-4 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
 
 export const Field = ({ label, hint, children }) => (
   <label className="block space-y-1">
-    <span className="text-sm text-peach">{label}</span>
+    <span className="text-sm font-semibold text-peach">{label}</span>
     {children}
     {hint && <span className="block text-xs text-cream/60">{hint}</span>}
   </label>
@@ -34,10 +34,11 @@ export function Shell({ children, wide = false, hideHeader = false }) {
   return (
     <div className={`mx-auto min-h-dvh px-4 pb-16 pt-4 ${wide ? 'max-w-3xl' : 'max-w-md'}`}>
       {!hideHeader && (
-        <header className="mb-5 text-center">
-          <Link to="/" className="font-display text-3xl font-bold tracking-wide text-cream">
-            Cappriccio <span className="text-rose">Nails</span>
+        <header className="mb-6 text-center">
+          <Link to="/" className="font-display text-3xl font-bold text-cream">
+            Cappriccio <span className="italic text-rose">Nails</span>
           </Link>
+          <div className="wood mx-auto mt-2 h-1 w-16 rounded-full opacity-90" />
         </header>
       )}
       {children}
@@ -53,8 +54,8 @@ export const StatusBadge = ({ status }) => {
 export function ConfirmDialog({ open, title, body, confirmLabel = 'Yes, continue', danger, busy, onConfirm, onCancel }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
-      <div className="w-full max-w-sm space-y-3 rounded-2xl border border-cream/15 bg-wine p-5">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-sm space-y-3 rounded-3xl border border-cream/15 bg-wine p-5 shadow-2xl">
         <h3 className="font-display text-2xl font-bold">{title}</h3>
         <p className="text-sm text-cream/80">{body}</p>
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -81,7 +82,7 @@ export const BackLink = ({ to, onClick, children = 'Back' }) =>
 export const Switch = ({ checked, onChange, label, disabled }) => (
   <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} onClick={() => onChange(!checked)}
     className={`relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-40 ${checked ? 'bg-rose' : 'bg-cream/20'}`}>
-    <span className={`absolute top-1 size-6 rounded-full bg-ink transition-all ${checked ? 'left-7' : 'left-1'}`} />
+    <span className={`absolute top-1 size-6 rounded-full bg-ink shadow transition-all ${checked ? 'left-7' : 'left-1'}`} />
   </button>
 )
 
