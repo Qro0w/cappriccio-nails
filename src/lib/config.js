@@ -52,8 +52,8 @@ export function calcPrice(service, length, removal, intensive) {
 
 export const STATUS = {
   awaiting_payment:  { label: 'Awaiting downpayment', cls: 'bg-peach/10 text-peach border-peach/40' },
-  payment_submitted: { label: 'Receipt submitted',    cls: 'bg-rose/15 text-rose border-rose/40' },
-  confirmed:         { label: 'Confirmed',            cls: 'bg-teak/40 text-peach border-teak' },
+  payment_submitted: { label: 'Receipt submitted',    cls: 'bg-rose/15 text-rose border-rose/50' },
+  confirmed:         { label: 'Confirmed',            cls: 'bg-cream/15 text-cream border-cream/40' },
   completed:         { label: 'Completed',            cls: 'bg-cream/10 text-cream/80 border-cream/30' },
   cancelled:         { label: 'Cancelled',            cls: 'bg-red-400/15 text-red-200 border-red-300/30' },
   rejected:          { label: 'Rejected',             cls: 'bg-red-400/15 text-red-200 border-red-300/30' },

@@ -65,12 +65,12 @@ export default function Dashboard() {
 
   if (!rows) return <p className="text-center text-cream/60">Loading bookings…</p>
 
-  const seg = (on) => `min-h-11 flex-1 rounded-lg text-sm font-semibold ${on ? 'bg-rose text-ink' : 'text-cream/70'}`
+  const seg = (on) => `min-h-11 flex-1 rounded-lg text-sm font-semibold ${on ? 'bg-cream text-ink' : 'text-cream/70'}`
   return (
     <div className="space-y-4">
       <Phrases />
       <button onClick={() => { setView('history'); setFilter('payment_submitted') }}
-        className={`w-full rounded-2xl border p-4 text-left ${action.length ? 'border-peach/50 bg-peach/10' : 'border-cream/10 bg-wine/60'}`}>
+        className={`w-full rounded-2xl border p-4 text-left ${action.length ? 'border-peach/50 bg-peach/10' : 'border-cream/20 bg-plum/55'}`}>
         <div className="text-2xl font-bold">{action.length}</div>
         <div className="text-sm text-cream/80">{action.length ? 'booking(s) need your attention (tap to view)' : 'Nothing needs your attention 🎉'}</div>
       </button>
@@ -93,7 +93,7 @@ export default function Dashboard() {
               }} />
           </Card>
           <div className="space-y-2">
-            <h2 className="font-display text-2xl font-bold">{fmtDateLong(day)}</h2>
+            <h2 className="font-display text-2xl font-semibold">{fmtDateLong(day)}</h2>
             {dayTimes.length === 0 && <p className="text-sm text-cream/60">No slots open on this day.</p>}
             {dayTimes.map((t) => {
               const bs = (byDay[day] || []).filter((b) => b.slot_time === t)
@@ -118,7 +118,7 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-2">
             {HISTORY_FILTERS.map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)}
-                className={`min-h-10 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-rose bg-rose text-ink' : 'border-cream/25 text-cream/80'}`}>
+                className={`min-h-10 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-cream bg-cream text-ink' : 'border-cream/25 text-cream/80'}`}>
                 {label} <span className="opacity-70">{countFor(key)}</span>
               </button>
             ))}

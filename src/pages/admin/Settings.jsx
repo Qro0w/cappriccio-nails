@@ -27,7 +27,7 @@ export default function Settings() {
   }
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-3xl font-bold">Settings</h1>
+      <h1 className="font-display text-3xl font-semibold">Settings</h1>
       <Card className="space-y-3">
         {FIELDS.map(([k, label, hint]) => (
           <Field key={k} label={label} hint={hint}><input className={inputCls} value={v[k] ?? ''} onChange={(e) => setV({ ...v, [k]: e.target.value })} /></Field>

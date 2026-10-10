@@ -36,10 +36,10 @@ function Build({ form, setForm, onNext, onBack }) {
   return (
     <div className="space-y-6 pb-4">
       <BackLink onClick={onBack}>Back</BackLink>
-      <h1 className="font-display text-3xl font-bold">Book your appointment</h1>
+      <h1 className="font-display text-3xl font-semibold">Book your appointment</h1>
 
       <section className="space-y-3">
-        <h2 className="font-display text-2xl font-bold text-peach">1. Choose your service</h2>
+        <h2 className="font-display text-[1.45rem] italic text-rose">1. Choose your service</h2>
         <ServicePicker selected={form.service} onSelect={(k) => setForm({ ...form, service: k, length: '', removal: '', intensive: false })} />
         <button type="button" onClick={() => setRates(!rates)} className="min-h-11 text-sm font-semibold text-peach underline">
           {rates ? 'Hide rates' : 'View all rates'}
@@ -49,14 +49,14 @@ function Build({ form, setForm, onNext, onBack }) {
 
       {form.service && (
         <section className="space-y-3">
-          <h2 className="font-display text-2xl font-bold text-peach">2. Your set</h2>
+          <h2 className="font-display text-[1.45rem] italic text-rose">2. Your set</h2>
           <Card className="space-y-4">
             {e.ext && (
               <Field label="What length">
                 <div className="grid grid-cols-3 gap-2">
                   {LENGTHS.map((l) => (
                     <button key={l} type="button" onClick={() => set('length', l)}
-                      className={`min-h-12 rounded-xl border capitalize ${form.length === l ? 'border-rose bg-rose text-ink' : 'border-cream/25'}`}>{l}</button>
+                      className={`min-h-12 rounded-xl border capitalize ${form.length === l ? 'border-cream bg-cream text-ink' : 'border-cream/25'}`}>{l}</button>
                   ))}
                 </div>
               </Field>
@@ -82,7 +82,7 @@ function Build({ form, setForm, onNext, onBack }) {
 
       {form.service && (
         <section className="space-y-3">
-          <h2 className="font-display text-2xl font-bold text-peach">3. Design tier level</h2>
+          <h2 className="font-display text-[1.45rem] italic text-rose">3. Design tier level</h2>
           <TierPicker value={form.tier} onChange={(n) => set('tier', n)} />
           <p className="text-xs text-cream/70">{TIER_NOTE}</p>
           {e.canIntensive && (
@@ -96,7 +96,7 @@ function Build({ form, setForm, onNext, onBack }) {
       )}
 
       <section className="space-y-3">
-        <h2 className="font-display text-2xl font-bold text-peach">{form.service ? '4' : '2'}. Your details</h2>
+        <h2 className="font-display text-[1.45rem] italic text-rose">{form.service ? '4' : '2'}. Your details</h2>
         <Card className="space-y-3">
           <Field label="Name"><input className={inputCls} value={form.full_name} onChange={(ev) => set('full_name', ev.target.value)} autoComplete="name" /></Field>
           <Field label="Instagram handle"><input className={inputCls} value={form.instagram} onChange={(ev) => set('instagram', ev.target.value)} autoCapitalize="none" placeholder="@yourname" /></Field>
@@ -109,7 +109,7 @@ function Build({ form, setForm, onNext, onBack }) {
         {price != null && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-cream/70">Estimated base total</span>
-            <span className="font-display text-2xl font-bold text-rose">{peso(price)}</span>
+            <span className="font-display text-2xl font-semibold text-rose">{peso(price)}</span>
           </div>
         )}
         <Btn className="w-full" disabled={!ready} onClick={onNext}>Choose date & time</Btn>
@@ -148,7 +148,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
   return (
     <div className="space-y-4">
       <BackLink onClick={onBack}>Back</BackLink>
-      <h1 className="font-display text-3xl font-bold">Pick a date & time</h1>
+      <h1 className="font-display text-3xl font-semibold">Pick a date & time</h1>
       <ErrorText>{err}</ErrorText>
       {!slots && !err && <p className="text-center text-cream/60">Loading the schedule…</p>}
       {slots && (
@@ -175,7 +175,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                 return (
                   <button key={s.slot_time} disabled={!free} onClick={() => setPick({ date: day, time: s.slot_time })}
                     className={`flex min-h-12 w-full items-center justify-between rounded-xl border px-4 text-left
-                      ${chosen ? 'border-rose bg-rose text-ink' : free ? 'border-cream/25 hover:bg-cream/10' : 'border-cream/10 text-cream/35'}`}>
+                      ${chosen ? 'border-cream bg-cream text-ink' : free ? 'border-cream/25 hover:bg-cream/10' : 'border-cream/10 text-cream/35'}`}>
                     <span className={`font-semibold ${s.state === 'taken' ? 'line-through' : ''}`}>{fmtTime(s.slot_time)}</span>
                     <span className="text-xs">{chosen ? 'Selected' : free ? 'Open' : s.state === 'taken' ? 'Booked' : 'Not available for your service'}</span>
                   </button>
@@ -227,10 +227,10 @@ function Review({ form, pick, onBack, onTaken }) {
   return (
     <div className="space-y-4">
       <BackLink onClick={onBack}>Back</BackLink>
-      <h1 className="font-display text-3xl font-bold">Review & reserve</h1>
+      <h1 className="font-display text-3xl font-semibold">Review & reserve</h1>
       <Card className="space-y-1 text-sm">
         <div className="mb-2 rounded-xl bg-rose/15 p-3 text-center">
-          <div className="font-display text-2xl font-bold text-rose">{fmtDate(pick.date)} · {fmtTime(pick.time)}</div>
+          <div className="font-display text-2xl font-semibold text-rose">{fmtDate(pick.date)} · {fmtTime(pick.time)}</div>
         </div>
         {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-3"><span className="text-cream/60">{k}</span><span className="text-right">{v}</span></div>)}
         <div className="flex justify-between border-t border-cream/10 pt-2 font-semibold"><span>Estimated base total</span><span className="text-rose">{peso(price)}</span></div>

@@ -55,7 +55,7 @@ function Reschedule({ b, onMoved }) {
         <div className="grid grid-cols-3 gap-2">
           {(byDate[day] || []).map((t) => (
             <button key={t} onClick={() => setTarget({ date: day, time: t })}
-              className={`min-h-11 rounded-xl border text-sm ${target?.time === t && target?.date === day ? 'border-rose bg-rose text-ink' : 'border-cream/25'}`}>{fmtTime(t)}</button>
+              className={`min-h-11 rounded-xl border text-sm ${target?.time === t && target?.date === day ? 'border-cream bg-cream text-ink' : 'border-cream/25'}`}>{fmtTime(t)}</button>
           ))}
         </div>
       )}
@@ -155,7 +155,7 @@ export default function BookingDetail() {
     <div className="space-y-4">
       <Link to="/admin" className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back to bookings</Link>
       <Card className="space-y-1 text-center">
-        <div className="font-display text-3xl font-bold">{b.full_name}</div>
+        <div className="font-display text-3xl font-semibold">{b.full_name}</div>
         <div className="break-all font-mono text-4xl font-bold tracking-wider text-rose">{b.code}</div>
         <div><StatusBadge status={b.status} /></div>
         <div className="text-lg">{fmtDateLong(b.slot_date)} · {fmtTime(b.slot_time)}</div>
@@ -221,7 +221,7 @@ export default function BookingDetail() {
       {delOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
           <div className="w-full max-w-sm space-y-3 rounded-2xl border border-cream/15 bg-wine p-5">
-            <h3 className="font-display text-2xl font-bold">Delete permanently?</h3>
+            <h3 className="font-display text-2xl font-semibold">Delete permanently?</h3>
             <p className="text-sm text-cream/80">{b.full_name}’s booking {b.code} and everything attached to it will be erased. Type <b>DELETE</b> to confirm.</p>
             <input className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} autoCapitalize="characters" placeholder="DELETE" />
             <div className="grid grid-cols-2 gap-2">

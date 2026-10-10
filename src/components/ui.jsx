@@ -1,26 +1,27 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { STATUS } from '../lib/config'
+import { CornerWaves, Logo } from './Decor'
 
 export const Card = ({ className = '', ...p }) => (
-  <div className={`rounded-3xl border border-cream/10 bg-wine/60 p-5 backdrop-blur ${className}`} {...p} />
+  <div className={`rounded-3xl border border-cream/20 bg-plum/55 p-5 backdrop-blur ${className}`} {...p} />
 )
 
 const VARIANTS = {
-  primary: 'bg-rose text-ink shadow-[0_3px_0_#b8707c] active:translate-y-0.5 active:shadow-none hover:bg-rose/90',
-  soft: 'boucle shadow-[0_3px_0_#b89a72] active:translate-y-0.5 active:shadow-none',
-  ghost: 'border-[1.5px] border-cream/15 bg-ink/35 text-cream hover:bg-cream/5',
+  primary: 'bg-cream text-[#3a0817] hover:bg-cream/90 active:scale-[0.99]',
+  soft: 'bg-rose text-[#3a0817] hover:bg-rose/90 active:scale-[0.99]',
+  ghost: 'border-[1.5px] border-rose/70 bg-ink/40 text-cream hover:bg-rose/10',
   danger: 'bg-red-700 text-white hover:bg-red-600',
 }
 export const Btn = ({ variant = 'primary', className = '', as: As = 'button', ...p }) => (
   <As
-    className={`inline-flex min-h-12 items-center justify-center rounded-2xl px-5 text-center font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
+    className={`inline-flex min-h-12 items-center justify-center rounded-full px-5 text-center font-display text-[1.05rem] font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
     {...p}
   />
 )
 
 export const inputCls =
-  'w-full min-h-12 rounded-2xl border border-cream/20 bg-ink/60 px-4 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
+  'w-full min-h-12 rounded-2xl border border-cream/20 bg-ink/50 px-4 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
 
 export const Field = ({ label, hint, children }) => (
   <label className="block space-y-1">
@@ -32,16 +33,17 @@ export const Field = ({ label, hint, children }) => (
 
 export function Shell({ children, wide = false, hideHeader = false }) {
   return (
-    <div className={`mx-auto min-h-dvh px-4 pb-16 pt-4 ${wide ? 'max-w-3xl' : 'max-w-md'}`}>
-      {!hideHeader && (
-        <header className="mb-6 text-center">
-          <Link to="/" className="font-display text-3xl font-bold text-cream">
-            Cappriccio <span className="italic text-rose">Nails</span>
-          </Link>
-          <div className="wood mx-auto mt-2 h-1 w-16 rounded-full opacity-90" />
-        </header>
-      )}
-      {children}
+    <div className="relative min-h-dvh overflow-x-hidden">
+      <CornerWaves big={hideHeader} bottom={hideHeader} />
+      <div className={`relative mx-auto min-h-dvh px-4 pb-16 pt-5 ${wide ? 'max-w-3xl' : 'max-w-md'}`}>
+        {!hideHeader && (
+          <header className="relative mb-4 flex justify-center">
+            <div className="logo-glow pointer-events-none absolute -top-16 h-52 w-80 rounded-full" />
+            <Link to="/" aria-label="Cappriccio Nails home" className="relative"><Logo /></Link>
+          </header>
+        )}
+        {children}
+      </div>
     </div>
   )
 }
@@ -55,8 +57,8 @@ export function ConfirmDialog({ open, title, body, confirmLabel = 'Yes, continue
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-sm space-y-3 rounded-3xl border border-cream/15 bg-wine p-5 shadow-2xl">
-        <h3 className="font-display text-2xl font-bold">{title}</h3>
+      <div className="w-full max-w-sm space-y-3 rounded-3xl border border-cream/20 bg-[#2a0612] p-5 shadow-2xl">
+        <h3 className="font-display text-2xl font-semibold">{title}</h3>
         <p className="text-sm text-cream/80">{body}</p>
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Btn variant="ghost" onClick={onCancel} disabled={busy}>Go back</Btn>

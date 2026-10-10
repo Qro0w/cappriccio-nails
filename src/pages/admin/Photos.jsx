@@ -41,7 +41,7 @@ export default function Photos() {
   if (!rows) return <p className="text-center text-cream/60">Loading…</p>
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-3xl font-bold">Tier photos</h1>
+      <h1 className="font-display text-3xl font-semibold">Tier photos</h1>
       <p className="text-sm text-cream/70">Add as many reference photos as you like for each tier. Clients see changes right away, no redeploy needed.</p>
       <ErrorText>{err}</ErrorText>
       {Array.from({ length: TIER_COUNT }, (_, k) => k + 1).map((n) => {
@@ -49,7 +49,7 @@ export default function Photos() {
         return (
           <Card key={n} className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-peach">Tier {n}</h2>
+              <h2 className="font-display text-[1.45rem] italic text-rose">Tier {n}</h2>
               <span className="text-xs text-cream/60">{list.length} photo{list.length === 1 ? '' : 's'}</span>
             </div>
             {list.length > 0 && (

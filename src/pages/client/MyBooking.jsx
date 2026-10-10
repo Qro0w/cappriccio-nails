@@ -22,7 +22,7 @@ function LookupForm({ onFound, notFound }) {
   return (
     <Card className="space-y-3">
       <BackLink to="/">Back</BackLink>
-      <h1 className="font-display text-3xl font-bold">Find my booking</h1>
+      <h1 className="font-display text-3xl font-semibold">Find my booking</h1>
       <p className="text-sm text-cream/70">Enter the booking code you were given and the phone number you booked with.</p>
       <Field label="Booking code"><input className={inputCls} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="CPN-XXXXX" autoCapitalize="characters" /></Field>
       <Field label="Phone number"><input className={inputCls} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09XX XXX XXXX" /></Field>
@@ -65,7 +65,7 @@ function PaymentBox({ b, cfg, phone, onDone }) {
 
   return (
     <Card className="space-y-4">
-      <h2 className="font-display text-2xl font-bold text-peach">{b.receipt_uploaded ? 'Receipt received' : 'Send your downpayment'}</h2>
+      <h2 className="font-display text-[1.45rem] italic text-rose">{b.receipt_uploaded ? 'Receipt received' : 'Send your downpayment'}</h2>
       {current && (
         <div className="space-y-2">
           <p className="text-sm text-emerald-200">Thank you! I’ll confirm your payment soon.</p>
@@ -170,7 +170,7 @@ export default function MyBooking() {
           <div className="break-all font-mono text-[2.6rem] font-bold leading-none tracking-wider text-rose">{b.code}</div>
           <CopyButton text={b.code} label="Copy code" className="w-full" />
           <div><StatusBadge status={b.status} /></div>
-          <div className="font-display text-2xl font-bold">{fmtDateLong(b.slot_date)}</div>
+          <div className="font-display text-2xl font-semibold">{fmtDateLong(b.slot_date)}</div>
           <div className="text-lg">{fmtTime(b.slot_time)}</div>
         </Card>
 

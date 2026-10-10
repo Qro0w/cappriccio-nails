@@ -25,11 +25,11 @@ function RateBlock({ head, rows }) {
 export function RatesTable() {
   return (
     <div className="space-y-4">
-      <section className="space-y-4 rounded-2xl border border-cream/10 bg-wine/60 p-4">
+      <section className="space-y-4 rounded-2xl border border-cream/20 bg-plum/55 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-cream/60">Base Rates</h2>
         {RATES.base.map((b) => <RateBlock key={b.head} {...b} />)}
       </section>
-      <section className="space-y-4 rounded-2xl border border-cream/10 bg-wine/60 p-4">
+      <section className="space-y-4 rounded-2xl border border-cream/20 bg-plum/55 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-cream/60">Removals</h2>
         {RATES.removals.map((b) => <RateBlock key={b.head} {...b} />)}
         <div className="space-y-1 border-t border-cream/10 pt-3 text-xs text-cream/70">
@@ -53,10 +53,10 @@ export default function ServicePicker({ selected, onSelect }) {
           {g.items.map((s) => {
             const on = selected === s.key
             return (
-              <div key={s.key} className={`flex items-start gap-1 rounded-2xl border ${on ? 'border-rose bg-rose/10' : 'border-cream/10 bg-wine/60'}`}>
+              <div key={s.key} className={`flex items-start gap-1 rounded-2xl border ${on ? 'border-cream bg-cream/[0.06]' : 'border-cream/20 bg-plum/55'}`}>
                 <button type="button" aria-label={`Select ${s.name}`} aria-pressed={on} onClick={() => onSelect(on ? '' : s.key)}
                   className="flex size-14 shrink-0 items-center justify-center">
-                  <span className={`flex size-6 items-center justify-center rounded-full border text-xs ${on ? 'border-rose bg-rose text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
+                  <span className={`flex size-6 items-center justify-center rounded-full border text-xs ${on ? 'border-cream bg-cream text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
                 </button>
                 <div className="min-w-0 flex-1">
                   <Collapsible tone="flat" title={s.name} right={<span className="text-xs text-rose">{s.price}</span>}

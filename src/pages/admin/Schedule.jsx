@@ -34,7 +34,7 @@ function PresetEditor({ preset, onSaved, onClose }) {
       <div className="grid grid-cols-3 gap-2">
         {all.map((t) => (
           <button key={t} type="button" onClick={() => flip(t)}
-            className={`min-h-11 rounded-xl border-2 text-sm font-semibold ${times.has(t) ? 'border-rose bg-rose text-ink' : 'border-cream/15 bg-ink text-cream/60'}`}>{label(t)}</button>
+            className={`min-h-11 rounded-xl border-2 text-sm font-semibold ${times.has(t) ? 'border-cream bg-cream text-ink' : 'border-cream/15 bg-ink text-cream/60'}`}>{label(t)}</button>
         ))}
       </div>
       <div className="flex gap-2">
@@ -166,7 +166,7 @@ export default function Schedule() {
     setPicked((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   }
 
-  const seg = (on) => `min-h-11 flex-1 rounded-xl text-sm font-semibold ${on ? 'bg-rose text-ink' : 'text-cream/70'}`
+  const seg = (on) => `min-h-11 flex-1 rounded-xl text-sm font-semibold ${on ? 'bg-cream text-ink' : 'text-cream/70'}`
   const pickedList = [...picked].sort()
   const drow = day && days.find((d) => d.day === day)
   const todays = day ? slotsOn(day) : []
@@ -177,12 +177,12 @@ export default function Schedule() {
 
   return (
     <div className="space-y-5">
-      <h1 className="font-display text-3xl font-bold text-rose">Schedule</h1>
+      <h1 className="font-display text-3xl font-semibold">Schedule</h1>
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="font-display text-xl font-bold">{format(month, 'MMMM yyyy')}</div>
+            <div className="font-display text-xl font-semibold">{format(month, 'MMMM yyyy')}</div>
             <div className={`text-xs font-semibold ${mvisible ? 'text-peach' : 'text-cream/60'}`}>{mvisible ? 'Visible to clients' : 'Hidden from clients'}</div>
           </div>
           <Switch checked={mvisible} onChange={setMonthVisible} label="Show this month to clients" />
@@ -213,12 +213,12 @@ export default function Schedule() {
       </Card>
 
       <ErrorText>{err}</ErrorText>
-      {msg && <p className="rounded-2xl bg-emerald-400/10 p-3 text-center text-sm font-semibold text-emerald-200">{msg}</p>}
+      {msg && <p className="rounded-2xl bg-cream/10 p-3 text-center text-sm font-semibold text-cream">{msg}</p>}
 
       {mode === 'multi' && (
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-bold">{picked.size ? `${picked.size} date${picked.size === 1 ? '' : 's'} picked` : 'Tap dates to pick them'}</h2>
+            <h2 className="font-display text-xl font-semibold">{picked.size ? `${picked.size} date${picked.size === 1 ? '' : 's'} picked` : 'Tap dates to pick them'}</h2>
             {picked.size > 0 && <button className="min-h-11 text-sm font-semibold text-peach underline" onClick={() => setPicked(new Set())}>Clear</button>}
           </div>
           {picked.size > 0 && <p className="text-xs text-cream/60">{pickedList.map(fmtDate).join(', ')}</p>}
@@ -241,7 +241,7 @@ export default function Schedule() {
 
       {mode === 'day' && day && (
         <Card className="space-y-4">
-          <h2 className="font-display text-xl font-bold">{fmtDateLong(day)}</h2>
+          <h2 className="font-display text-xl font-semibold">{fmtDateLong(day)}</h2>
           {reason && todays.length > 0 && <p className="rounded-xl bg-peach/10 p-2 text-xs font-semibold text-peach">{reasonText[reason]}</p>}
 
           <div>
@@ -310,7 +310,7 @@ export default function Schedule() {
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold">My presets</h2>
+          <h2 className="font-display text-xl font-semibold">My presets</h2>
           {!editing && <Btn variant="ghost" className="!min-h-10 text-sm" onClick={() => setEditing({})}>+ New</Btn>}
         </div>
         {editing && !editing.id && <PresetEditor preset={null} onSaved={() => { setEditing(null); load() }} onClose={() => setEditing(null)} />}

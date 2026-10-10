@@ -32,10 +32,10 @@ export default function TierPicker({ value, onChange }) {
         const list = imgs[n] || []
         const on = Number(value) === n
         return (
-          <div key={n} className={`rounded-2xl border p-3 ${on ? 'border-rose bg-rose/10' : 'border-cream/15'}`}>
+          <div key={n} className={`rounded-2xl border p-3 ${on ? 'border-cream bg-cream/[0.06]' : 'border-cream/15'}`}>
             <button type="button" onClick={() => onChange(n)} className="flex min-h-11 w-full items-center justify-between text-left">
               <span className="text-base font-semibold">Tier {n}</span>
-              <span className={`flex size-6 items-center justify-center rounded-full border text-xs ${on ? 'border-rose bg-rose text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
+              <span className={`flex size-6 items-center justify-center rounded-full border text-xs ${on ? 'border-cream bg-cream text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
             </button>
             {list.length > 0 ? (
               <div className="-mx-1 mt-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">

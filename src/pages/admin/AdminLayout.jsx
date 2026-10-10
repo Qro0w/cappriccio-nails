@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Outlet } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { CornerWaves, Logo } from '../../components/Decor'
 
 export default function AdminLayout() {
   const [session, setSession] = useState(undefined)
@@ -13,10 +14,15 @@ export default function AdminLayout() {
   if (session === undefined) return <p className="p-8 text-center text-cream/60">Loading…</p>
   if (!session) return <Navigate to="/admin/login" replace />
 
-  const tab = ({ isActive }) => `flex min-h-14 flex-1 items-center justify-center text-xs font-semibold ${isActive ? 'text-rose' : 'text-cream/60'}`
+  const tab = ({ isActive }) => `flex min-h-14 flex-1 items-center justify-center text-xs font-semibold ${isActive ? 'text-cream' : 'text-cream/55'}`
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-28 pt-4">
-      <header className="mb-4 text-center font-display text-2xl font-bold text-cream">Cappriccio <span className="italic text-rose">Nails</span></header>
+    <div className="relative min-h-dvh overflow-x-hidden">
+    <CornerWaves />
+    <div className="relative mx-auto max-w-2xl px-4 pb-28 pt-5">
+      <header className="relative mb-4 flex justify-center">
+        <div className="logo-glow pointer-events-none absolute -top-16 h-52 w-80 rounded-full" />
+        <span className="relative"><Logo /></span>
+      </header>
       <Outlet />
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-cream/10 bg-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto flex max-w-2xl">
@@ -27,6 +33,7 @@ export default function AdminLayout() {
           <button onClick={() => supabase.auth.signOut()} className="flex min-h-14 flex-1 items-center justify-center text-xs text-cream/60">Sign out</button>
         </div>
       </nav>
+    </div>
     </div>
   )
 }

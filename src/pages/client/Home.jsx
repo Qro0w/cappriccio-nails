@@ -2,18 +2,16 @@ import { Link } from 'react-router-dom'
 import { AFTER_RESERVE } from '../../lib/content'
 import { IG_URL, IG_HANDLE } from '../../lib/config'
 import { Btn, Shell } from '../../components/ui'
+import { Logo } from '../../components/Decor'
 
 export default function Home() {
   return (
     <Shell hideHeader>
-      <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center gap-10 pt-6">
-        <div className="relative mx-auto flex flex-col items-center text-center">
-          <div className="lamp-glow absolute -top-16 size-80 rounded-full" />
-          <h1 className="relative font-display text-[3.6rem] font-bold leading-[0.9] text-cream">
-            Cappriccio<br /><span className="italic text-rose">Nails</span>
-          </h1>
-          <div className="wood relative mt-5 h-1.5 w-28 rounded-full opacity-90" />
-          <a href={IG_URL} target="_blank" rel="noreferrer" className="relative mt-2 inline-block min-h-11 py-2 text-sm font-semibold text-peach">{IG_HANDLE}</a>
+      <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center gap-9 px-4 pt-6">
+        <div className="relative flex flex-col items-center text-center">
+          <div className="logo-glow pointer-events-none absolute -top-24 size-[22rem] rounded-full" />
+          <h1 className="relative"><span className="sr-only">Cappriccio Nails</span><Logo size="lg" /></h1>
+          <a href={IG_URL} target="_blank" rel="noreferrer" className="relative mt-3 inline-block min-h-11 py-2 font-display text-[1.05rem] text-cream">{IG_HANDLE}</a>
         </div>
 
         <div className="space-y-3">
@@ -23,8 +21,8 @@ export default function Home() {
         </div>
 
         <div className="space-y-1 text-center">
-          <p className="px-4 text-xs text-cream/60">{AFTER_RESERVE}</p>
-          <Link to="/forgot-code" className="inline-block min-h-11 pt-2 text-sm font-semibold text-cream underline underline-offset-4">Forgot my booking code</Link>
+          <p className="px-2 font-display text-[0.8rem] text-cream/75">{AFTER_RESERVE}</p>
+          <Link to="/forgot-code" className="inline-block min-h-11 pt-2 font-display text-sm text-cream underline underline-offset-4">Forgot my booking code</Link>
         </div>
       </div>
     </Shell>

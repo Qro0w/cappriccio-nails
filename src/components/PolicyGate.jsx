@@ -42,7 +42,7 @@ export default function PolicyGate({ onAgree, onBack }) {
   return (
     <div className="space-y-4 pb-4">
       {onBack}
-      <h1 className="font-display text-3xl font-bold">Policies</h1>
+      <h1 className="font-display text-3xl font-semibold">Policies</h1>
       <p className="text-sm text-cream/80">{POLICY_INTRO}</p>
       <div className="space-y-3">
         {POLICIES.map((g, i) => (
