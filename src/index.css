@@ -41,3 +41,39 @@ body::before {
 @keyframes phrase-in { from { opacity: 0; transform: translateY(8px); filter: blur(2px) } to { opacity: 1; transform: none; filter: none } }
 .phrase-in { animation: phrase-in 900ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .phrase-in { animation: none } }
+
+/* ---------- subtle motion ----------
+   'backwards' (not 'both') so finished animations leave no transform behind;
+   otherwise pop-ups inside an animated page can't cover the screen. */
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(24px) scale(0.98) } to { opacity: 1; transform: none } }
+@keyframes soft-pop { from { opacity: 0; transform: scale(0.96) } to { opacity: 1; transform: none } }
+@keyframes float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes glow-breathe { 0%, 100% { opacity: 0.85 } 50% { opacity: 1 } }
+
+.page-in   { animation: fade-up 450ms cubic-bezier(.2,.7,.2,1) backwards; }
+.anim-in   { animation: fade-up 500ms cubic-bezier(.2,.7,.2,1) backwards; }
+.fade-in   { animation: fade-in 250ms ease-out backwards; }
+.rise-in   { animation: rise-in 320ms cubic-bezier(.2,.8,.2,1) backwards; }
+.pop-in    { animation: soft-pop 600ms cubic-bezier(.2,.7,.2,1) backwards; }
+.float     { animation: float 6s ease-in-out infinite; }
+.logo-glow { animation: glow-breathe 5s ease-in-out infinite; }
+
+/* loading shimmer */
+.skeleton { background: linear-gradient(100deg, rgb(243 230 208 / 0.05) 30%, rgb(243 230 208 / 0.12) 50%, rgb(243 230 208 / 0.05) 70%) 0 0 / 300% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+@keyframes shimmer { from { background-position: 100% 0 } to { background-position: 0 0 } }
+
+/* success check */
+.draw-ring { stroke-dasharray: 214; stroke-dashoffset: 214; transform: rotate(-90deg); transform-origin: 40px 40px; animation: draw 700ms ease-out 100ms forwards; }
+.draw-check { stroke-dasharray: 50; stroke-dashoffset: 50; animation: draw 400ms ease-out 650ms forwards; }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+.sparkle { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 9999px; background: var(--color-peach); opacity: 0;
+  animation: burst 900ms ease-out 700ms forwards; }
+@keyframes burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.6) } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-46px) scale(1) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .draw-ring, .draw-check { animation: none; stroke-dashoffset: 0; }
+  .sparkle, .skeleton { animation: none; }
+  .page-in, .anim-in, .fade-in, .rise-in, .pop-in, .float, .logo-glow { animation: none !important; }
+}

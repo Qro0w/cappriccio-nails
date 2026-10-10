@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/client/Home'
 import Book from './pages/client/Book'
 import MyBooking from './pages/client/MyBooking'
@@ -11,13 +11,19 @@ import Dashboard from './pages/admin/Dashboard'
 import BookingDetail from './pages/admin/BookingDetail'
 import Schedule from './pages/admin/Schedule'
 import Settings from './pages/admin/Settings'
+import Earnings from './pages/admin/Earnings'
+import NewBooking from './pages/admin/NewBooking'
+import PolicyEditor from './pages/admin/PolicyEditor'
 import ErrorBoundary from './components/ErrorBoundary'
 
-export default function App() {
+// Every page fades up gently when you open it
+function AnimatedRoutes() {
+  const loc = useLocation()
+  // nailtech pages share one layout (it animates its own content), so keep it mounted between tabs
+  const inAdmin = loc.pathname.startsWith('/admin') && loc.pathname !== '/admin/login'
   return (
-    <ErrorBoundary>
-    <BrowserRouter>
-      <Routes>
+    <div key={inAdmin ? 'admin' : loc.pathname} className="page-in">
+      <Routes location={loc}>
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<Book />} />
         <Route path="/my-booking" element={<MyBooking />} />
@@ -30,9 +36,21 @@ export default function App() {
           <Route path="schedule" element={<Schedule />} />
           <Route path="photos" element={<Photos />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="earnings" element={<Earnings />} />
+          <Route path="new" element={<NewBooking />} />
+          <Route path="policies" element={<PolicyEditor />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AnimatedRoutes />
+      </BrowserRouter>
     </ErrorBoundary>
   )
 }

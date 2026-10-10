@@ -12,8 +12,9 @@
 // =====================================================================================
 
 export const POLICY_VERSION = '2026-10-v3'
-export const policyAccepted = () => { try { return localStorage.getItem('cpn_policy_ok') === POLICY_VERSION } catch { return false } }
-export const savePolicyAccepted = () => { try { localStorage.setItem('cpn_policy_ok', POLICY_VERSION) } catch { /* ignore */ } }
+// The nailtech can edit the policies from Admin > Settings; that gives a new version string from the server.
+export const policyAccepted = (v = POLICY_VERSION) => { try { return localStorage.getItem('cpn_policy_ok') === v } catch { return false } }
+export const savePolicyAccepted = (v = POLICY_VERSION) => { try { localStorage.setItem('cpn_policy_ok', v) } catch { /* ignore */ } }
 
 export const POLICY_INTRO =
   'Please do read the Policies when booking to avoid any added fees and surprises on the day of appointment'

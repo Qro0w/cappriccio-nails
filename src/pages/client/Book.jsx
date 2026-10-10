@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO, startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
-import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, removalOptions } from '../../lib/config'
-import { AFTER_RESERVE, F_HARD_NOTE, POLICY_VERSION, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted } from '../../lib/content'
+import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, priceBreakdown, removalOptions } from '../../lib/config'
+import { policiesFrom, policyVersionFrom, usePublicSettings } from '../../lib/publicSettings'
+import { EmptyState, Skeleton } from '../../components/Feedback'
+import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted } from '../../lib/content'
 import Rich from '../../components/Rich'
 import { cleanIg, cleanPhone, fmtDate, fmtTime, peso, validPhone } from '../../lib/format'
-import { BackLink, Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
+import { BackLink, Btn, Card, ErrorText, Field, FieldError, FormAlert, Shell, inputCls, scrollToFirst } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import PolicyGate from '../../components/PolicyGate'
 import ServicePicker, { RatesTable } from '../../components/ServicePicker'
@@ -23,15 +25,40 @@ const effective = (f) => {
   return { ext, length: ext ? f.length : null, canIntensive, intensive: canIntensive && f.intensive }
 }
 
+// Every check for the booking form, in the order the fields appear on the page
+function validate(f) {
+  const e = effective(f)
+  const out = []
+  const add = (id, label, msg) => out.push({ id, label, msg })
+  if (!f.service) add('f-service', 'Service', 'Please choose a service.')
+  if (f.service && e.ext && !f.length) add('f-length', 'Length', 'Please choose a length.')
+  if (f.service && !f.removal) add('f-removal', 'Removal', 'Please choose an option (or "No removal").')
+  if (f.service && !f.tier) add('f-tier', 'Design tier', 'Please choose a design tier.')
+  if (!f.full_name.trim()) add('f-name', 'Name', 'Please enter your name.')
+  else if (f.full_name.trim().length < 2) add('f-name', 'Name', 'Please enter your full name.')
+  const ig = f.instagram.trim().replace(/^@/, '')
+  if (!ig) add('f-ig', 'Instagram handle', 'Please enter your Instagram handle.')
+  else if (/\s/.test(ig)) add('f-ig', 'Instagram handle', 'Instagram handles can’t have spaces.')
+  if (!f.phone.trim()) add('f-phone', 'Phone number', 'Please enter your phone number.')
+  else if (!validPhone(f.phone)) add('f-phone', 'Phone number', 'Please enter a valid PH mobile number, e.g. 0917 123 4567.')
+  if (!f.age) add('f-age', 'Age', 'Please enter your age.')
+  else if (Number(f.age) < 1 || Number(f.age) > 99) add('f-age', 'Age', 'Please enter a valid age.')
+  return out
+}
+
 function Build({ form, setForm, onNext, onBack }) {
   const set = (k, v) => setForm({ ...form, [k]: v })
   const [rates, setRates] = useState(false)
+  const [tried, setTried] = useState(false)
   const e = effective(form)
   const price = calcPrice(form.service, e.length, form.removal, e.intensive)
   const opts = form.service ? removalOptions(form.service) : []
-  const ready =
-    form.full_name.trim() && form.instagram.replace('@', '').trim() && validPhone(form.phone) &&
-    Number(form.age) >= 1 && form.service && (!e.ext || form.length) && form.removal && form.tier
+  const problems = validate(form)
+  const err = (id) => (tried ? problems.find((x) => x.id === id)?.msg : undefined)
+  function next() {
+    if (problems.length) { setTried(true); scrollToFirst(problems.map((x) => x.id)); return }
+    onNext()
+  }
 
   return (
     <div className="space-y-6 pb-4">
@@ -39,7 +66,8 @@ function Build({ form, setForm, onNext, onBack }) {
       <h1 className="font-display text-3xl font-semibold">Book your appointment</h1>
 
       <section className="space-y-3">
-        <h2 className="font-display text-[1.45rem] italic text-rose">1. Choose your service</h2>
+        <h2 id="f-service" className="scroll-mt-24 font-display text-[1.45rem] italic text-rose">1. Choose your service</h2>
+        <FieldError>{err('f-service')}</FieldError>
         <ServicePicker selected={form.service} onSelect={(k) => setForm({ ...form, service: k, length: '', removal: '', intensive: false })} />
         <button type="button" onClick={() => setRates(!rates)} className="min-h-11 text-sm font-semibold text-peach underline">
           {rates ? 'Hide rates' : 'View all rates'}
@@ -52,7 +80,7 @@ function Build({ form, setForm, onNext, onBack }) {
           <h2 className="font-display text-[1.45rem] italic text-rose">2. Your set</h2>
           <Card className="space-y-4">
             {e.ext && (
-              <Field label="What length">
+              <Field label="What length" id="f-length" error={err('f-length')}>
                 <div className="grid grid-cols-3 gap-2">
                   {LENGTHS.map((l) => (
                     <button key={l} type="button" onClick={() => set('length', l)}
@@ -61,7 +89,7 @@ function Build({ form, setForm, onNext, onBack }) {
                 </div>
               </Field>
             )}
-            <Field label="If removal is needed">
+            <Field label="If removal is needed" id="f-removal" error={err('f-removal')}>
               <select className={inputCls} value={form.removal} onChange={(ev) => set('removal', ev.target.value)}>
                 <option value="">Choose…</option>
                 <option value="none">{REMOVALS.none.label}</option>
@@ -82,7 +110,8 @@ function Build({ form, setForm, onNext, onBack }) {
 
       {form.service && (
         <section className="space-y-3">
-          <h2 className="font-display text-[1.45rem] italic text-rose">3. Design tier level</h2>
+          <h2 id="f-tier" className="scroll-mt-24 font-display text-[1.45rem] italic text-rose">3. Design tier level</h2>
+          <FieldError>{err('f-tier')}</FieldError>
           <TierPicker value={form.tier} onChange={(n) => set('tier', n)} />
           <p className="text-xs text-cream/70">{TIER_NOTE}</p>
           {e.canIntensive && (
@@ -98,21 +127,29 @@ function Build({ form, setForm, onNext, onBack }) {
       <section className="space-y-3">
         <h2 className="font-display text-[1.45rem] italic text-rose">{form.service ? '4' : '2'}. Your details</h2>
         <Card className="space-y-3">
-          <Field label="Name"><input className={inputCls} value={form.full_name} onChange={(ev) => set('full_name', ev.target.value)} autoComplete="name" /></Field>
-          <Field label="Instagram handle"><input className={inputCls} value={form.instagram} onChange={(ev) => set('instagram', ev.target.value)} autoCapitalize="none" placeholder="@yourname" /></Field>
-          <Field label="Phone number"><input className={inputCls} inputMode="tel" value={form.phone} onChange={(ev) => set('phone', ev.target.value)} autoComplete="tel" placeholder="09XX XXX XXXX" /></Field>
-          <Field label="Age"><input className={inputCls} inputMode="numeric" value={form.age} onChange={(ev) => set('age', ev.target.value.replace(/\D/g, '').slice(0, 2))} /></Field>
+          <Field label="Name" id="f-name" error={err('f-name')}><input className={inputCls} value={form.full_name} onChange={(ev) => set('full_name', ev.target.value)} autoComplete="name" /></Field>
+          <Field label="Instagram handle" id="f-ig" error={err('f-ig')}><input className={inputCls} value={form.instagram} onChange={(ev) => set('instagram', ev.target.value)} autoCapitalize="none" placeholder="@yourname" /></Field>
+          <Field label="Phone number" id="f-phone" error={err('f-phone')}><input className={inputCls} inputMode="tel" value={form.phone} onChange={(ev) => set('phone', ev.target.value)} autoComplete="tel" placeholder="09XX XXX XXXX" /></Field>
+          <Field label="Age" id="f-age" error={err('f-age')}><input className={inputCls} inputMode="numeric" value={form.age} onChange={(ev) => set('age', ev.target.value.replace(/\D/g, '').slice(0, 2))} /></Field>
         </Card>
       </section>
 
       <div className="sticky bottom-3 space-y-2 rounded-2xl border border-cream/10 bg-ink/95 p-3 shadow-lg backdrop-blur">
         {price != null && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-cream/70">Estimated base total</span>
-            <span className="font-display text-2xl font-semibold text-rose">{peso(price)}</span>
-          </div>
+          <details className="group text-sm">
+            <summary className="flex cursor-pointer list-none items-center justify-between">
+              <span className="text-cream/70">Estimated base total <span className="text-xs text-cream/50 underline group-open:hidden">see breakdown</span></span>
+              <span className="font-display text-2xl font-semibold text-rose">{peso(price)}</span>
+            </summary>
+            <div className="anim-in mt-1 space-y-0.5 text-xs text-cream/70">
+              {priceBreakdown(form.service, e.length, form.removal, e.intensive).map((l) => (
+                <div key={l.label} className="flex justify-between"><span>{l.label}</span><span>{peso(l.amount)}</span></div>
+              ))}
+            </div>
+          </details>
         )}
-        <Btn className="w-full" disabled={!ready} onClick={onNext}>Choose date & time</Btn>
+        {tried && <FormAlert items={[...new Set(problems.map((x) => x.label))]} />}
+        <Btn className="w-full" onClick={next}>Choose date & time</Btn>
       </div>
     </div>
   )
@@ -123,6 +160,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
   const [err, setErr] = useState('')
   const [month, setMonth] = useState(startOfMonth(new Date()))
   const [day, setDay] = useState(pick?.date || null)
+  const [pickErr, setPickErr] = useState('')
 
   async function load() {
     setErr('')
@@ -150,12 +188,12 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
       <BackLink onClick={onBack}>Back</BackLink>
       <h1 className="font-display text-3xl font-semibold">Pick a date & time</h1>
       <ErrorText>{err}</ErrorText>
-      {!slots && !err && <p className="text-center text-cream/60">Loading the schedule…</p>}
+      {!slots && !err && <Skeleton lines={4} />}
       {slots && (
         <>
           <Card>
             <Calendar
-              month={month} onMonth={setMonth} selected={day} onSelect={(d) => { setDay(d); setPick(null) }}
+              month={month} onMonth={setMonth} selected={day} onSelect={(d) => { setDay(d); setPick(null); setPickErr('') }}
               isDisabled={(k) => !byDate[k]}
               badge={(k, sel) => {
                 const l = byDate[k]; if (!l) return null
@@ -164,7 +202,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                 return <span className={cls}>{n ? `${n} open` : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
               }}
             />
-            {slots.length === 0 && <p className="pt-3 text-center text-sm text-cream/60">No dates are open right now. Please check back soon.</p>}
+            {slots.length === 0 && <div className="pt-3"><EmptyState icon="☾" title="No dates open right now">New dates are added regularly. Please check back soon or message <Rich text="@cappriccio.nails" />.</EmptyState></div>}
           </Card>
           {day && byDate[day] && (
             <Card className="space-y-2">
@@ -173,7 +211,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                 const chosen = pick?.date === day && pick?.time === s.slot_time
                 const free = s.state === 'available'
                 return (
-                  <button key={s.slot_time} disabled={!free} onClick={() => setPick({ date: day, time: s.slot_time })}
+                  <button key={s.slot_time} disabled={!free} onClick={() => { setPick({ date: day, time: s.slot_time }); setPickErr('') }}
                     className={`flex min-h-12 w-full items-center justify-between rounded-xl border px-4 text-left
                       ${chosen ? 'border-cream bg-cream text-ink' : free ? 'border-cream/25 hover:bg-cream/10' : 'border-cream/10 text-cream/35'}`}>
                     <span className={`font-semibold ${s.state === 'taken' ? 'line-through' : ''}`}>{fmtTime(s.slot_time)}</span>
@@ -184,9 +222,10 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
             </Card>
           )}
           <p className="text-xs text-cream/60">Available times depend on the service, length, removal and tier you chose. Slots are first come, first served.</p>
+          <FormAlert items={pickErr ? [pickErr] : []} />
           <div className="grid grid-cols-[auto_1fr] gap-2">
             <Btn variant="ghost" onClick={load}>Refresh</Btn>
-            <Btn disabled={!pick} onClick={onNext}>Review booking</Btn>
+            <Btn onClick={() => (pick ? onNext() : setPickErr(day ? 'an open time on that date' : 'a date and an open time'))}>Review booking</Btn>
           </div>
         </>
       )}
@@ -194,7 +233,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
   )
 }
 
-function Review({ form, pick, onBack, onTaken }) {
+function Review({ form, pick, onBack, onTaken, policyVersion }) {
   const nav = useNavigate()
   const e = effective(form)
   const [busy, setBusy] = useState(false)
@@ -206,16 +245,17 @@ function Review({ form, pick, onBack, onTaken }) {
     const { data, error } = await supabase.rpc('create_booking', {
       p_name: form.full_name.trim(), p_ig: cleanIg(form.instagram), p_phone: cleanPhone(form.phone), p_age: Number(form.age),
       p_service: form.service, p_length: e.length, p_removal: form.removal, p_tier: Number(form.tier), p_intensive: e.intensive,
-      p_date: pick.date, p_time: pick.time, p_policy_version: POLICY_VERSION,
+      p_date: pick.date, p_time: pick.time, p_policy_version: policyVersion,
     })
     setBusy(false)
     if (error) {
       const m = error.message || ''
       if (m.includes('SLOT_TAKEN') || m.includes('SLOT_UNAVAILABLE')) { setErr('Sorry, that slot was just taken. Please pick another one.'); return setTimeout(onTaken, 1800) }
+      if (m.includes('TOO_MANY_PENDING')) return setErr('You already have 2 bookings waiting for payment or confirmation. Please pay for those first, or message @cappriccio.nails.')
       return setErr('Something went wrong. Please check your details and try again.')
     }
     localStorage.setItem('cpn_booking', JSON.stringify({ code: data, phone: cleanPhone(form.phone) }))
-    nav('/my-booking')
+    nav('/my-booking', { state: { justBooked: true } })
   }
 
   const rows = [
@@ -233,11 +273,17 @@ function Review({ form, pick, onBack, onTaken }) {
           <div className="font-display text-2xl font-semibold text-rose">{fmtDate(pick.date)} · {fmtTime(pick.time)}</div>
         </div>
         {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-3"><span className="text-cream/60">{k}</span><span className="text-right">{v}</span></div>)}
+        <div className="mt-1 space-y-1 border-t border-cream/10 pt-2">
+          {priceBreakdown(form.service, e.length, form.removal, e.intensive).map((l) => (
+            <div key={l.label} className="flex justify-between gap-3 text-cream/70"><span>{l.label}</span><span>{peso(l.amount)}</span></div>
+          ))}
+        </div>
         <div className="flex justify-between border-t border-cream/10 pt-2 font-semibold"><span>Estimated base total</span><span className="text-rose">{peso(price)}</span></div>
+        <p className="text-xs text-cream/50">Final price depends on your exact design.</p>
       </Card>
       <Card className="space-y-2 text-[13px]">
         <p><Rich text="!!NO DOWNPAYMENT = NO APPOINTMENT.!! **Down payment must be paid strictly within 12 hours of booking.**" /> Your 12 hours start the moment you reserve. Upload your receipt on the next page.</p>
-        <p>{AFTER_RESERVE}</p>
+        <p><Rich text={AFTER_RESERVE} /></p>
       </Card>
       <ErrorText>{err}</ErrorText>
       <Btn className="w-full" disabled={busy} onClick={submit}>{busy ? 'Reserving…' : 'Reserve this slot'}</Btn>
@@ -247,7 +293,10 @@ function Review({ form, pick, onBack, onTaken }) {
 
 export default function Book() {
   const nav = useNavigate()
-  const [step, setStep] = useState(() => (policyAccepted() ? 'build' : 'policy'))
+  const cfg = usePublicSettings()
+  const version = policyVersionFrom(cfg)
+  const [step, setStep] = useState(null)
+  useEffect(() => { if (cfg && step === null) setStep(policyAccepted(version) ? 'build' : 'policy') }, [cfg, step, version])
   const [form, setForm] = useState(EMPTY)
   const [pick, setPick] = useState(null)
   useEffect(() => {
@@ -256,10 +305,11 @@ export default function Book() {
   }, [step])
   return (
     <Shell>
-      {step === 'policy' && <PolicyGate onBack={<BackLink to="/">Back</BackLink>} onAgree={() => { savePolicyAccepted(); setStep('build') }} />}
+      {step === null && <Skeleton lines={5} className="pt-6" />}
+      {step === 'policy' && <PolicyGate policies={policiesFrom(cfg)} onBack={<BackLink to="/">Back</BackLink>} onAgree={() => { savePolicyAccepted(version); setStep('build') }} />}
       {step === 'build' && <Build form={form} setForm={setForm} onBack={() => nav('/')} onNext={() => { setPick(null); setStep('slot') }} />}
       {step === 'slot' && <SlotStep form={form} pick={pick} setPick={setPick} onBack={() => setStep('build')} onNext={() => setStep('review')} />}
-      {step === 'review' && <Review form={form} pick={pick} onBack={() => setStep('slot')} onTaken={() => { setPick(null); setStep('slot') }} />}
+      {step === 'review' && <Review form={form} pick={pick} policyVersion={version} onBack={() => setStep('slot')} onTaken={() => { setPick(null); setStep('slot') }} />}
     </Shell>
   )
 }

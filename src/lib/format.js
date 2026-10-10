@@ -22,4 +22,9 @@ export function fmtCountdown(ms) {
   const clock = `${p(Math.floor((s % 86400) / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`
   return d > 0 ? `${d} ${d === 1 ? 'Day' : 'Days'}, ${clock}` : clock
 }
+// What the client still owes: final price (or the estimate if none) minus the downpayment
+export function balanceOf(finalPrice, estimated, dp) {
+  const total = finalPrice != null && finalPrice !== '' ? Number(finalPrice) : Number(estimated)
+  return { total, paid: Number(dp || 0), left: Math.max(0, total - Number(dp || 0)), usingEstimate: finalPrice == null || finalPrice === '' }
+}
 export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2))

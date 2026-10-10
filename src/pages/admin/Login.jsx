@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
@@ -11,9 +11,16 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const [tried, setTried] = useState(false)
+
+  // already signed in on this device? go straight in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { if (data.session) nav('/admin', { replace: true }) })
+  }, [nav])
 
   async function submit(e) {
     e.preventDefault()
+    if (!email.trim() || !password) { setTried(true); return }
     setBusy(true); setErr('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setBusy(false)
@@ -22,7 +29,7 @@ export default function Login() {
   }
   return (
     <Shell hideHeader>
-      <div className="relative flex justify-center pt-14">
+      <div className="pop-in relative flex justify-center pt-14">
         <div className="logo-glow pointer-events-none absolute -top-10 size-[22rem] rounded-full" />
         <span className="relative"><Logo size="md" /></span>
       </div>
@@ -31,10 +38,10 @@ export default function Login() {
       <Card>
       <form onSubmit={submit} className="space-y-3">
         <p className="text-center text-xs text-cream/60">You stay signed in on this device until you tap Sign out.</p>
-        <Field label="Email"><input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></Field>
-        <Field label="Password"><input className={inputCls} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></Field>
+        <Field label="Email" error={tried && !email.trim() ? 'Please enter your email.' : ''}><input className={inputCls} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" /></Field>
+        <Field label="Password" error={tried && !password ? 'Please enter your password.' : ''}><input className={inputCls} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></Field>
         <ErrorText>{err}</ErrorText>
-        <Btn type="submit" className="w-full" disabled={busy || !email || !password}>{busy ? 'Signing in…' : 'Sign in'}</Btn>
+        <Btn type="submit" className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Btn>
       </form>
       </Card>
     </Shell>

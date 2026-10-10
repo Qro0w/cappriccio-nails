@@ -17,7 +17,7 @@ export default function Collapsible({ title, sub, right, open, onToggle, childre
           <span className={`text-cream/50 transition ${open ? 'rotate-180' : ''}`}>⌄</span>
         </span>
       </button>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="anim-in px-4 pb-4">{children}</div>}
     </div>
   )
 }

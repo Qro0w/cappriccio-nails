@@ -50,10 +50,22 @@ export function calcPrice(service, length, removal, intensive) {
   return base + REMOVALS[removal].fee + (intensive ? INTENSIVE_FEE : 0)
 }
 
+// Line-by-line estimate shown to clients: [{ label, amount }]
+export function priceBreakdown(service, length, removal, intensive) {
+  if (!service) return []
+  const b = BASE[service]
+  const base = typeof b === 'number' ? b : b?.[length]
+  const out = []
+  if (base != null) out.push({ label: SERVICES[service].label + (typeof b === 'number' || !length ? '' : ` (${length})`), amount: base })
+  if (removal && REMOVALS[removal]?.fee) out.push({ label: REMOVALS[removal].label.replace(/\*$/, ''), amount: REMOVALS[removal].fee })
+  if (intensive) out.push({ label: 'Intensive Manicure', amount: INTENSIVE_FEE })
+  return out
+}
+
 export const STATUS = {
   awaiting_payment:  { label: 'Awaiting downpayment', cls: 'bg-peach/10 text-peach border-peach/40' },
-  payment_submitted: { label: 'Receipt submitted',    cls: 'bg-rose/15 text-rose border-rose/50' },
-  confirmed:         { label: 'Confirmed',            cls: 'bg-cream/15 text-cream border-cream/40' },
+  payment_submitted: { label: 'Pending confirmation',    cls: 'bg-rose/15 text-rose border-rose/50' },
+  confirmed:         { label: 'Approved',            cls: 'bg-cream/15 text-cream border-cream/40' },
   completed:         { label: 'Completed',            cls: 'bg-cream/10 text-cream/80 border-cream/30' },
   cancelled:         { label: 'Cancelled',            cls: 'bg-red-400/15 text-red-200 border-red-300/30' },
   rejected:          { label: 'Rejected',             cls: 'bg-red-400/15 text-red-200 border-red-300/30' },

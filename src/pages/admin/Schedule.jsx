@@ -176,7 +176,7 @@ export default function Schedule() {
   const reasonText = { month: 'The whole month is hidden from clients.', day: 'You turned this day off for clients.' }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-3xl space-y-5">
       <h1 className="font-display text-3xl font-semibold">Schedule</h1>
 
       <Card className="space-y-3">

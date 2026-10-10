@@ -4,6 +4,7 @@ import { compressImage } from '../../lib/image'
 import { uid } from '../../lib/format'
 import { TIER_COUNT } from '../../lib/config'
 import { Card, ConfirmDialog, ErrorText } from '../../components/ui'
+import { Skeleton } from '../../components/Feedback'
 
 export default function Photos() {
   const [rows, setRows] = useState(null)
@@ -38,9 +39,9 @@ export default function Photos() {
     load()
   }
 
-  if (!rows) return <p className="text-center text-cream/60">Loading…</p>
+  if (!rows) return <Skeleton lines={4} />
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 [&>h1]:lg:col-span-2 [&>p]:lg:col-span-2">
       <h1 className="font-display text-3xl font-semibold">Tier photos</h1>
       <p className="text-sm text-cream/70">Add as many reference photos as you like for each tier. Clients see changes right away, no redeploy needed.</p>
       <ErrorText>{err}</ErrorText>

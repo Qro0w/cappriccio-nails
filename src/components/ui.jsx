@@ -15,7 +15,7 @@ const VARIANTS = {
 }
 export const Btn = ({ variant = 'primary', className = '', as: As = 'button', ...p }) => (
   <As
-    className={`inline-flex min-h-12 items-center justify-center rounded-full px-5 text-center font-display text-[1.05rem] font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
+    className={`inline-flex min-h-12 items-center justify-center rounded-full px-5 text-center font-display text-[1.05rem] font-medium transition duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTS[variant]} ${className}`}
     {...p}
   />
 )
@@ -23,13 +23,34 @@ export const Btn = ({ variant = 'primary', className = '', as: As = 'button', ..
 export const inputCls =
   'w-full min-h-12 rounded-2xl border border-cream/20 bg-ink/50 px-4 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
 
-export const Field = ({ label, hint, children }) => (
-  <label className="block space-y-1">
+export const Field = ({ label, hint, error, id, children }) => (
+  <label id={id} className={`block space-y-1 scroll-mt-24 ${error ? '[&_input]:border-red-400 [&_select]:border-red-400' : ''}`}>
     <span className="text-sm font-semibold text-peach">{label}</span>
     {children}
-    {hint && <span className="block text-xs text-cream/60">{hint}</span>}
+    {error ? <span role="alert" className="block text-xs font-semibold text-red-300">{error}</span>
+      : hint && <span className="block text-xs text-cream/60">{hint}</span>}
   </label>
 )
+
+// Small inline error used under non-input controls (service cards, tiers, slots…)
+export const FieldError = ({ children }) =>
+  children ? <p role="alert" className="text-xs font-semibold text-red-300">{children}</p> : null
+
+// Shown above a submit button when something was skipped
+export const FormAlert = ({ items }) =>
+  items?.length ? (
+    <div role="alert" className="rounded-xl border border-red-400/50 bg-red-500/15 p-3 text-sm text-red-100">
+      <b>Please complete:</b> {items.join(', ')}
+    </div>
+  ) : null
+
+// Scroll to the first field with an error (ids follow the order given)
+export function scrollToFirst(ids) {
+  for (const id of ids) {
+    const el = document.getElementById(id)
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+  }
+}
 
 export function Shell({ children, wide = false, hideHeader = false }) {
   return (
@@ -56,10 +77,10 @@ export const StatusBadge = ({ status }) => {
 export function ConfirmDialog({ open, title, body, confirmLabel = 'Yes, continue', danger, busy, onConfirm, onCancel }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-sm space-y-3 rounded-3xl border border-cream/20 bg-[#2a0612] p-5 shadow-2xl">
+    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+      <div className="rise-in w-full max-w-sm space-y-3 rounded-3xl border border-cream/20 bg-[#2a0612] p-5 shadow-2xl">
         <h3 className="font-display text-2xl font-semibold">{title}</h3>
-        <p className="text-sm text-cream/80">{body}</p>
+        <div className="text-sm text-cream/80">{body}</div>
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Btn variant="ghost" onClick={onCancel} disabled={busy}>Go back</Btn>
           <Btn variant={danger ? 'danger' : 'primary'} onClick={onConfirm} disabled={busy}>
