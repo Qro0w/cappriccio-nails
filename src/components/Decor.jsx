@@ -4,13 +4,17 @@
 // The dark gradient and the faint cream streaks live in index.css (body), so every page gets them.
 
 export function Logo({ size = 'sm', className = '' }) {
-  // lg = main logo (client landing), md = main logo a bit smaller (nailtech login + bookings home), sm = small arch logo
-  return size === 'lg' || size === 'md' ? (
-    <img src="/logo-main.webp" alt="Cappriccio Nails" width={1000} height={363}
-      className={`block h-auto ${size === 'lg' ? 'w-[min(22rem,90vw)]' : 'w-[min(17rem,78vw)]'} drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${className}`} />
-  ) : (
-    <img src="/logo-small.webp" alt="Cappriccio Nails" width={232} height={320}
-      className={`block h-24 w-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${className}`} />
+  // lg / md = the arch logo (client landing page / nailtech login)
+  // sm      = the music-note wordmark, at the top of every other page
+  if (size === 'lg' || size === 'md') {
+    return (
+      <img src="/logo-arch.webp" alt="Cappriccio Nails" width={407} height={560}
+        className={`block w-auto ${size === 'lg' ? 'h-[min(16rem,42vh)]' : 'h-[min(13rem,34vh)]'} drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${className}`} />
+    )
+  }
+  return (
+    <img src="/logo-note.webp" alt="Cappriccio Nails" width={600} height={218}
+      className={`block h-auto w-[11rem] drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${className}`} />
   )
 }
 
