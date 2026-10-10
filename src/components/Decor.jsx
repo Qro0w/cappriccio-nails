@@ -4,13 +4,13 @@
 // The dark gradient and the faint cream streaks live in index.css (body), so every page gets them.
 
 export function Logo({ size = 'sm', className = '' }) {
-  // lg = the main landing-page logo, sm = the small arch logo used on every other page
-  return size === 'lg' ? (
-    <img src="/logo-main.webp" alt="Cappriccio Nails" width={712} height={290}
-      className={`block h-auto w-[min(21rem,88vw)] drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${className}`} />
+  // lg = main logo (client landing), md = main logo a bit smaller (nailtech login + bookings home), sm = small arch logo
+  return size === 'lg' || size === 'md' ? (
+    <img src="/logo-main.webp" alt="Cappriccio Nails" width={1000} height={363}
+      className={`block h-auto ${size === 'lg' ? 'w-[min(22rem,90vw)]' : 'w-[min(17rem,78vw)]'} drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${className}`} />
   ) : (
-    <img src="/logo-small.webp" alt="Cappriccio Nails" width={233} height={300}
-      className={`block h-[5.75rem] w-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${className}`} />
+    <img src="/logo-small.webp" alt="Cappriccio Nails" width={232} height={320}
+      className={`block h-24 w-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${className}`} />
   )
 }
 

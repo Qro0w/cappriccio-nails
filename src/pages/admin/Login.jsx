@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
+import { Logo } from '../../components/Decor'
 import Phrases from '../../components/Phrases'
 
 export default function Login() {
@@ -20,7 +21,11 @@ export default function Login() {
     nav('/admin', { replace: true })
   }
   return (
-    <Shell>
+    <Shell hideHeader>
+      <div className="relative flex justify-center pt-14">
+        <div className="logo-glow pointer-events-none absolute -top-10 size-[22rem] rounded-full" />
+        <span className="relative"><Logo size="md" /></span>
+      </div>
       <h1 className="sr-only">Nailtech login</h1>
       <Phrases className="mb-6 mt-4" />
       <Card>
