@@ -9,8 +9,8 @@ export default function Home() {
     <Shell hideHeader>
       <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center gap-9 px-4 pt-6">
         <div className="relative flex flex-col items-center text-center">
-          <div className="logo-glow pointer-events-none absolute -top-24 size-[22rem] rounded-full" />
-          <h1 className="relative"><span className="sr-only">Cappriccio Nails</span><Logo size="lg" /></h1>
+          <div className="logo-glow pointer-events-none absolute -top-28 size-[22rem] rounded-full" />
+          <h1 className="relative"><Logo size="lg" /></h1>
           <a href={IG_URL} target="_blank" rel="noreferrer" className="relative mt-3 inline-block min-h-11 py-2 font-display text-[1.05rem] text-cream">{IG_HANDLE}</a>
         </div>
 

@@ -1,16 +1,16 @@
 // Brand pieces shared by the client and nailtech pages:
-//   <Logo />         the Cappriccio logo (image) with "Nails" in Playfair italic
+//   <Logo />         the logo: size="lg" = main landing logo, default = small arch logo
 //   <CornerWaves />  the soft cream shapes in the corners
 // The dark gradient and the faint cream streaks live in index.css (body), so every page gets them.
 
 export function Logo({ size = 'sm', className = '' }) {
-  const lg = size === 'lg'
-  return (
-    <span className={`inline-flex flex-col items-center ${className}`}>
-      <img src="/logo-cappriccio.webp" alt="Cappriccio" width={lg ? 262 : 150} height={lg ? 71 : 41}
-        className="block h-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)]" style={{ width: lg ? 262 : 150 }} />
-      <span className={`self-end font-display font-medium italic leading-[0.9] text-rose ${lg ? '-mt-1.5 mr-[6%] text-[3.6rem]' : '-mt-0.5 mr-[6%] text-[2rem]'}`}>Nails</span>
-    </span>
+  // lg = the main landing-page logo, sm = the small arch logo used on every other page
+  return size === 'lg' ? (
+    <img src="/logo-main.webp" alt="Cappriccio Nails" width={712} height={290}
+      className={`block h-auto w-[min(21rem,88vw)] drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${className}`} />
+  ) : (
+    <img src="/logo-small.webp" alt="Cappriccio Nails" width={233} height={300}
+      className={`block h-[5.75rem] w-auto drop-shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${className}`} />
   )
 }
 
