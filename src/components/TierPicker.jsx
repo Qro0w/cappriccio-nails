@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase, publicUrl } from '../lib/supabase'
 import { TIER_COUNT } from '../lib/config'
 import Lightbox from './Lightbox'
+import { TIER_DESCRIPTIONS } from '../lib/content'
 
 // Loads tier photos (public table). Re-checks every 45s and when the tab regains focus,
 // so photos the nailtech adds or removes show up without a redeploy.
@@ -33,9 +34,12 @@ export default function TierPicker({ value, onChange }) {
         const on = Number(value) === n
         return (
           <div key={n} className={`rounded-2xl border p-3 ${on ? 'border-cream bg-cream/[0.06]' : 'border-cream/15'}`}>
-            <button type="button" onClick={() => onChange(n)} className="flex min-h-11 w-full items-center justify-between text-left">
-              <span className="text-base font-semibold">Tier {n}</span>
-              <span className={`flex size-6 items-center justify-center rounded-full border text-xs ${on ? 'border-cream bg-cream text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
+            <button type="button" onClick={() => onChange(n)} className="flex min-h-11 w-full items-center justify-between gap-3 text-left">
+              <span>
+                <span className="block text-base font-semibold">Tier {n}</span>
+                {TIER_DESCRIPTIONS[n] && <span className="block text-xs leading-snug text-cream/70">{TIER_DESCRIPTIONS[n]}</span>}
+              </span>
+              <span className={`flex size-6 shrink-0 items-center justify-center rounded-full border text-xs ${on ? 'border-cream bg-cream text-ink' : 'border-cream/40'}`}>{on ? '✓' : ''}</span>
             </button>
             {list.length > 0 ? (
               <div className="-mx-1 mt-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">

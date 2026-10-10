@@ -198,3 +198,11 @@ Phone number:
 Instagram: 
 Booking date & time: 
 Service: `
+
+// Short tier descriptions shown under each tier name when booking.
+export const TIER_DESCRIPTIONS = {
+  1: 'Plain solid colors, nudes, solid cat eye, or simple chrome/French tips.',
+  2: 'Simple accents on a few nails, like small art or charms.',
+  3: 'Detailed hand-painted art or patterns across most nails.',
+  4: 'The most intricate sets: full detailed art, 3D or character designs.',
+}

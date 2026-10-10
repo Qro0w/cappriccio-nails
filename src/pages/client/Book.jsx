@@ -111,6 +111,7 @@ function Build({ form, setForm, onNext, onBack }) {
       {form.service && (
         <section className="space-y-3">
           <h2 id="f-tier" className="scroll-mt-24 font-display text-[1.45rem] italic text-rose">3. Design tier level</h2>
+          <p className="-mt-2 text-sm text-cream/80">Tiers are not about price. They’re about how intricate the design is.</p>
           <FieldError>{err('f-tier')}</FieldError>
           <TierPicker value={form.tier} onChange={(n) => set('tier', n)} />
           <p className="text-xs text-cream/70">{TIER_NOTE}</p>
