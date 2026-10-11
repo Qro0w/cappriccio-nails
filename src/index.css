@@ -77,3 +77,18 @@ body::before {
   .sparkle, .skeleton { animation: none; }
   .page-in, .anim-in, .fade-in, .rise-in, .pop-in, .float, .logo-glow { animation: none !important; }
 }
+
+/* Collapsibles: animate height (grid 0fr → 1fr) with a soft fade/slide */
+.reveal { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms cubic-bezier(.2,.7,.2,1); }
+.reveal.is-open { grid-template-rows: 1fr; }
+.reveal-inner { opacity: 0; transform: translateY(-6px); transition: opacity 220ms ease, transform 320ms cubic-bezier(.2,.7,.2,1); }
+.reveal.is-open .reveal-inner { opacity: 1; transform: none; transition-delay: 60ms; }
+
+/* Themed dropdown list */
+.sel-pop { animation: sel-pop 180ms cubic-bezier(.2,.7,.2,1) backwards; transform-origin: top center; }
+@keyframes sel-pop { from { opacity: 0; transform: translateY(-4px) scale(.98) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-inner { transition: none; }
+  .sel-pop { animation: none; }
+}

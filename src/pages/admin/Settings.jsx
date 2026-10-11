@@ -1,3 +1,4 @@
+import Select from '../../components/Select'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, publicUrl } from '../../lib/supabase'
@@ -81,18 +82,17 @@ export default function Settings() {
       <Card className="space-y-3">
         <h2 className="font-display text-xl font-semibold">Booking safeguards</h2>
         <Field label="Stop client bookings for a day" hint="You can still book someone in yourself.">
-          <select className={inputCls} value={v.cutoff_hours_before ?? '0'} onChange={(e) => setV({ ...v, cutoff_hours_before: e.target.value })}>
-            <option value="0">When the day starts (midnight)</option>
-            <option value="3">9 PM the night before</option>
-            <option value="6">6 PM the night before</option>
-            <option value="12">Noon the day before</option>
-            <option value="24">Midnight the day before</option>
-          </select>
+          <Select value={v.cutoff_hours_before ?? '0'} onChange={(x) => setV({ ...v, cutoff_hours_before: x })} options={[
+            { value: '0', label: 'When the day starts (midnight)' },
+            { value: '3', label: '9 PM the night before' },
+            { value: '6', label: '6 PM the night before' },
+            { value: '12', label: 'Noon the day before' },
+            { value: '24', label: 'Midnight the day before' },
+          ]} />
         </Field>
         <Field label="Waiting bookings allowed per phone number" hint="Unpaid or not-yet-approved. Approved bookings don’t count.">
-          <select className={inputCls} value={v.max_pending_per_phone ?? '2'} onChange={(e) => setV({ ...v, max_pending_per_phone: e.target.value })}>
-            {['1', '2', '3', '4', '5'].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          <Select value={v.max_pending_per_phone ?? '2'} onChange={(x) => setV({ ...v, max_pending_per_phone: x })}
+            options={['1', '2', '3', '4', '5'].map((n) => ({ value: n, label: n }))} />
         </Field>
         <Field label="Hours to upload a new receipt" hint="When you tap “Ask for a new receipt”.">
           <input className={inputCls} inputMode="numeric" value={v.resubmit_hours ?? '6'} onChange={(e) => setV({ ...v, resubmit_hours: e.target.value.replace(/\D/g, '') })} />

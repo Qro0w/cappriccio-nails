@@ -1,6 +1,7 @@
+import Select from './Select'
 import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, intensiveAllowed, removalOptions } from '../lib/config'
 import { peso } from '../lib/format'
-import { Field, inputCls } from './ui'
+import { Field } from './ui'
 
 // Compact service editor used by the nailtech (add booking / edit booking).
 // value = { service, length, removal, tier, intensive }
@@ -11,10 +12,8 @@ export default function ServiceFields({ value: v, onChange, errors = {} }) {
   return (
     <div className="space-y-3">
       <Field label="Service" error={errors.service}>
-        <select className={inputCls} value={v.service} onChange={(e) => set({ service: e.target.value, length: '', removal: v.removal === 'fill' ? '' : v.removal, intensive: false })}>
-          <option value="">Choose…</option>
-          {Object.entries(SERVICES).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
-        </select>
+        <Select value={v.service} onChange={(x) => set({ service: x, length: '', removal: v.removal === 'fill' ? '' : v.removal, intensive: false })}
+          options={Object.entries(SERVICES).map(([k, s]) => ({ value: k, label: s.label }))} />
       </Field>
       {ext && (
         <Field label="Length" error={errors.length}>
@@ -27,12 +26,8 @@ export default function ServiceFields({ value: v, onChange, errors = {} }) {
         </Field>
       )}
       <Field label="Removal" error={errors.removal}>
-        <select className={inputCls} value={v.removal} onChange={(e) => set({ removal: e.target.value, intensive: false })}>
-          <option value="">Choose…</option>
-          {(v.service ? removalOptions(v.service) : Object.keys(REMOVALS)).map((k) => (
-            <option key={k} value={k}>{REMOVALS[k].label}{REMOVALS[k].fee ? ` (+${peso(REMOVALS[k].fee)})` : ''}</option>
-          ))}
-        </select>
+        <Select value={v.removal} onChange={(x) => set({ removal: x, intensive: false })}
+          options={(v.service ? removalOptions(v.service) : Object.keys(REMOVALS)).map((k) => ({ value: k, label: REMOVALS[k].label, extra: REMOVALS[k].fee ? `+${peso(REMOVALS[k].fee)}` : '' }))} />
       </Field>
       <Field label="Design tier" error={errors.tier}>
         <div className="grid grid-cols-4 gap-2">

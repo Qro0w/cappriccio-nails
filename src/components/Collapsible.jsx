@@ -1,3 +1,16 @@
+import { Chevron } from './Select'
+
+// Smoothly opens/closes its children (height + fade). Content stays mounted so it can animate out.
+export function Reveal({ open, children, className = '' }) {
+  return (
+    <div className={`reveal ${open ? 'is-open' : ''}`} inert={!open || undefined} aria-hidden={!open}>
+      <div className="min-h-0 overflow-hidden">
+        <div className={`reveal-inner ${className}`}>{children}</div>
+      </div>
+    </div>
+  )
+}
+
 // Controlled accordion row. Parent decides which one is open (so only one is open at a time).
 export default function Collapsible({ title, sub, right, open, onToggle, children, tone = 'card' }) {
   return (
@@ -10,14 +23,18 @@ export default function Collapsible({ title, sub, right, open, onToggle, childre
       >
         <span className="min-w-0">
           <span className="block font-semibold text-peach">{title}</span>
-          {sub && !open && <span className="block truncate text-xs font-semibold text-cream/60">{sub}</span>}
+          {sub && (
+            <span className={`grid transition-all duration-300 ${open ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
+              <span className="block min-h-0 truncate overflow-hidden text-xs font-semibold text-cream/60">{sub}</span>
+            </span>
+          )}
         </span>
         <span className="flex shrink-0 items-center gap-2 text-sm">
           {right}
-          <span className={`text-cream/50 transition ${open ? 'rotate-180' : ''}`}>⌄</span>
+          <Chevron open={open} className="text-cream/50" />
         </span>
       </button>
-      {open && <div className="anim-in px-4 pb-4">{children}</div>}
+      <Reveal open={open} className="px-4 pb-4">{children}</Reveal>
     </div>
   )
 }

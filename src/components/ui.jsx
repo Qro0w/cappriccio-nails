@@ -24,7 +24,7 @@ export const inputCls =
   'w-full min-h-12 rounded-2xl border border-cream/20 bg-ink/50 px-4 text-base text-cream placeholder:text-cream/40 focus:border-rose focus:outline-none'
 
 export const Field = ({ label, hint, error, id, children }) => (
-  <label id={id} className={`block space-y-1 scroll-mt-24 ${error ? '[&_input]:border-red-400 [&_select]:border-red-400' : ''}`}>
+  <label id={id} className={`block space-y-1 scroll-mt-24 ${error ? '[&_input]:border-red-400 [&_select]:border-red-400 [&_.sel]:border-red-400' : ''}`}>
     <span className="text-sm font-semibold text-peach">{label}</span>
     {children}
     {error ? <span role="alert" className="block text-xs font-semibold text-red-300">{error}</span>

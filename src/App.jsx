@@ -1,4 +1,5 @@
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Btn, Shell } from './components/ui'
 import Home from './pages/client/Home'
 import Book from './pages/client/Book'
 import MyBooking from './pages/client/MyBooking'
@@ -17,6 +18,18 @@ import PolicyEditor from './pages/admin/PolicyEditor'
 import ErrorBoundary from './components/ErrorBoundary'
 
 // Every page fades up gently when you open it
+function NotFound() {
+  return (
+    <Shell>
+      <div className="space-y-4 py-10 text-center">
+        <h1 className="font-display text-3xl font-semibold">Page not found</h1>
+        <p className="text-sm text-cream/75">This link doesn’t go anywhere. It may have been typed wrong.</p>
+        <Btn as={Link} to="/" className="w-full">Go to the home page</Btn>
+      </div>
+    </Shell>
+  )
+}
+
 function AnimatedRoutes() {
   const loc = useLocation()
   // nailtech pages share one layout (it animates its own content), so keep it mounted between tabs
@@ -39,7 +52,9 @@ function AnimatedRoutes() {
           <Route path="earnings" element={<Earnings />} />
           <Route path="new" element={<NewBooking />} />
           <Route path="policies" element={<PolicyEditor />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   )

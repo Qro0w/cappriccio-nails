@@ -48,3 +48,4 @@ export function changeLinesFrom(policies) {
 }
 
 export const qrUrlFrom = (cfg) => (cfg?.gcash_qr_path ? publicUrl('tier-photos', cfg.gcash_qr_path) : '/gcash-qr.png')
+

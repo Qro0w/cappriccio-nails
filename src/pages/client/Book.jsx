@@ -1,3 +1,5 @@
+import Select, { Chevron } from '../../components/Select'
+import { Reveal } from '../../components/Collapsible'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO, startOfMonth } from 'date-fns'
@@ -5,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, priceBreakdown, removalOptions } from '../../lib/config'
 import { policiesFrom, policyVersionFrom, usePublicSettings } from '../../lib/publicSettings'
 import { EmptyState, Skeleton } from '../../components/Feedback'
-import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted } from '../../lib/content'
+import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted, POLICY_INTRO } from '../../lib/content'
 import Rich from '../../components/Rich'
 import { cleanIg, cleanPhone, fmtDate, fmtTime, peso, validPhone } from '../../lib/format'
 import { BackLink, Btn, Card, ErrorText, Field, FieldError, FormAlert, Shell, inputCls, scrollToFirst } from '../../components/ui'
@@ -49,6 +51,7 @@ function validate(f) {
 function Build({ form, setForm, onNext, onBack }) {
   const set = (k, v) => setForm({ ...form, [k]: v })
   const [rates, setRates] = useState(false)
+  const [breakdown, setBreakdown] = useState(false)
   const [tried, setTried] = useState(false)
   const e = effective(form)
   const price = calcPrice(form.service, e.length, form.removal, e.intensive)
@@ -90,17 +93,11 @@ function Build({ form, setForm, onNext, onBack }) {
               </Field>
             )}
             <Field label="If removal is needed" id="f-removal" error={err('f-removal')}>
-              <select className={inputCls} value={form.removal} onChange={(ev) => set('removal', ev.target.value)}>
-                <option value="">Choose…</option>
-                <option value="none">{REMOVALS.none.label}</option>
-                {['My Work', 'Foreign Removals'].map((g) => (
-                  <optgroup key={g} label={g}>
-                    {opts.filter((k) => REMOVALS[k].group === g).map((k) => (
-                      <option key={k} value={k}>{REMOVALS[k].label} (+{peso(REMOVALS[k].fee)})</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+              <Select value={form.removal} onChange={(v) => set('removal', v)} options={[
+                { value: 'none', label: REMOVALS.none.label },
+                ...['My Work', 'Foreign Removals'].flatMap((g) => opts.filter((k) => REMOVALS[k].group === g)
+                  .map((k) => ({ value: k, label: REMOVALS[k].label, extra: `+${peso(REMOVALS[k].fee)}`, group: g }))),
+              ]} />
               {form.removal === 'f_hard' && <span className="mt-1 block text-xs font-semibold text-peach">{F_HARD_NOTE}</span>}
               <span className="mt-1 block text-xs text-cream/60"><Rich text={REMOVAL_NOTE} /></span>
             </Field>
@@ -137,17 +134,21 @@ function Build({ form, setForm, onNext, onBack }) {
 
       <div className="sticky bottom-3 space-y-2 rounded-2xl border border-cream/10 bg-ink/95 p-3 shadow-lg backdrop-blur">
         {price != null && (
-          <details className="group text-sm">
-            <summary className="flex cursor-pointer list-none items-center justify-between">
-              <span className="text-cream/70">Estimated base total <span className="text-xs text-cream/50 underline group-open:hidden">see breakdown</span></span>
+          <div className="text-sm">
+            <button type="button" aria-expanded={breakdown} onClick={() => setBreakdown(!breakdown)} className="flex w-full items-center justify-between text-left">
+              <span className="flex items-center gap-1.5 text-cream/70">Estimated base total
+                <span className="flex items-center gap-0.5 text-xs text-cream/50">{breakdown ? 'hide' : 'see breakdown'}<Chevron open={breakdown} className="!size-3.5" /></span>
+              </span>
               <span className="font-display text-2xl font-semibold text-rose">{peso(price)}</span>
-            </summary>
-            <div className="anim-in mt-1 space-y-0.5 text-xs text-cream/70">
-              {priceBreakdown(form.service, e.length, form.removal, e.intensive).map((l) => (
-                <div key={l.label} className="flex justify-between"><span>{l.label}</span><span>{peso(l.amount)}</span></div>
-              ))}
-            </div>
-          </details>
+            </button>
+            <Reveal open={breakdown}>
+              <div className="mt-1 space-y-0.5 text-xs text-cream/70">
+                {priceBreakdown(form.service, e.length, form.removal, e.intensive).map((l) => (
+                  <div key={l.label} className="flex justify-between"><span>{l.label}</span><span>{peso(l.amount)}</span></div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
         )}
         {tried && <FormAlert items={[...new Set(problems.map((x) => x.label))]} />}
         <Btn className="w-full" onClick={next}>Choose date & time</Btn>
@@ -307,7 +308,7 @@ export default function Book() {
   return (
     <Shell>
       {step === null && <Skeleton lines={5} className="pt-6" />}
-      {step === 'policy' && <PolicyGate policies={policiesFrom(cfg)} onBack={<BackLink to="/">Back</BackLink>} onAgree={() => { savePolicyAccepted(version); setStep('build') }} />}
+      {step === 'policy' && <PolicyGate policies={policiesFrom(cfg)} intro={POLICY_INTRO} onBack={<BackLink to="/">Back</BackLink>} onAgree={() => { savePolicyAccepted(version); setStep('build') }} />}
       {step === 'build' && <Build form={form} setForm={setForm} onBack={() => nav('/')} onNext={() => { setPick(null); setStep('slot') }} />}
       {step === 'slot' && <SlotStep form={form} pick={pick} setPick={setPick} onBack={() => setStep('build')} onNext={() => setStep('review')} />}
       {step === 'review' && <Review form={form} pick={pick} policyVersion={version} onBack={() => setStep('slot')} onTaken={() => { setPick(null); setStep('slot') }} />}

@@ -68,7 +68,7 @@ export default function PolicyEditor() {
             {secs.length > 1 && <button className="min-h-11 px-2 text-sm text-red-300" onClick={() => setSecs(secs.filter((_, j) => j !== i))}>Remove</button>}
           </div>
           <Field label="Title" error={tried && !s.title.trim() ? 'Add a title.' : ''}><input className={inputCls} value={s.title} onChange={(e) => set(i, 'title', e.target.value)} /></Field>
-          <Field label="Short line under the title (optional)"><input className={inputCls} value={s.teaser} onChange={(e) => set(i, 'teaser', e.target.value)} /></Field>
+          <Field label="Highlight line (optional)" hint="Shown big at the top of this part."><input className={inputCls} value={s.teaser} onChange={(e) => set(i, 'teaser', e.target.value)} /></Field>
           <Field label="Bullets" error={tried && !s.body.trim() ? 'Add at least one bullet.' : ''}>
             <textarea className={inputCls + ' min-h-48 py-2 text-sm leading-relaxed'} value={s.body} onChange={(e) => set(i, 'body', e.target.value)} />
           </Field>
