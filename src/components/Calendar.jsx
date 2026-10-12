@@ -3,7 +3,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMont
 // Generic month calendar used by clients (slot picker) and the nailtech (bookings + schedule).
 //  badge(dateStr)      -> small JSX shown under the day number
 //  isDisabled(dateStr) -> true = greyed out and not tappable
-export default function Calendar({ month, onMonth, selected, onSelect, badge, isDisabled, isSelected }) {
+export default function Calendar({ month, onMonth, selected, onSelect, badge, isDisabled, isSelected, dayClass }) {
   const days = eachDayOfInterval({ start: startOfWeek(startOfMonth(month)), end: endOfWeek(endOfMonth(month)) })
   return (
     <div>
@@ -27,7 +27,7 @@ export default function Calendar({ month, onMonth, selected, onSelect, badge, is
               disabled={off}
               onClick={() => onSelect(key)}
               className={`flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition
-                ${sel ? 'bg-cream text-ink' : off ? 'text-cream/25' : 'bg-cream/5 hover:bg-cream/15'}`}
+                ${sel ? 'bg-cream text-ink' : off ? 'text-cream/25' : dayClass?.(key) || 'bg-cream/5 hover:bg-cream/15'}`}
             >
               <span className="font-semibold">{format(d, 'd')}</span>
               <span className="h-3 text-[10px] leading-3">{badge?.(key, sel)}</span>

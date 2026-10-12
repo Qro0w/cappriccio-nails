@@ -189,6 +189,19 @@ export default function Schedule() {
     }
     done(null, `“${preset.name}” applied to ${dates.length} date${dates.length === 1 ? '' : 's'} ✓${kept ? ` (${kept} booked time${kept === 1 ? '' : 's'} kept)` : ''}`)
   }
+  // Old "closed" times (from the on/off switch that was removed). Not bookable; safe to tidy away.
+  const closedOld = slots.filter((x) => x.is_open === false && !booked.some((b) => b.slot_date === x.slot_date && hhmm(b.slot_time) === hhmm(x.slot_time)))
+  async function removeClosed() {
+    setErr(''); setMsg('')
+    const byDate = {}
+    closedOld.forEach((x) => (byDate[x.slot_date] ||= []).push(x.slot_time))
+    for (const [d, ts] of Object.entries(byDate)) {
+      const r = await supabase.from('schedule_slots').delete().eq('slot_date', d).eq('is_open', false).in('slot_time', ts)
+      if (r.error) return done(r)
+    }
+    done(null, `${closedOld.length} closed time${closedOld.length === 1 ? '' : 's'} removed ✓`)
+  }
+
   async function removePreset() {
     const p = delPreset; setDelPreset(null)
     done(await supabase.from('slot_presets').delete().eq('id', p.id))
@@ -237,6 +250,13 @@ export default function Schedule() {
         <p className="text-xs text-cream/50">Opening a couple of weeks at a time? Use <b>Many days</b> → pick the weeks → <b>Show</b>. That opens just those weeks, even if the month is hidden.</p>
       </Card>
 
+      {closedOld.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-cream/15 bg-ink/40 p-3 text-sm">
+          <p><b>{closedOld.length} “closed” time{closedOld.length === 1 ? '' : 's'}</b> left over from the old on/off switch. Clients already can’t book {closedOld.length === 1 ? 'it' : 'them'}, so removing {closedOld.length === 1 ? 'it' : 'them'} changes nothing for clients. It just tidies your schedule.</p>
+          <Btn variant="ghost" className="w-full !min-h-11 text-sm" onClick={removeClosed}>Remove closed times</Btn>
+        </div>
+      )}
+
       <div className="flex gap-1 rounded-2xl bg-cream/5 p-1">
         <button className={seg(mode === 'day')} onClick={() => setMode('day')}>Edit one day</button>
         <button className={seg(mode === 'multi')} onClick={() => { setMode('multi'); setMsg('') }}>Many days</button>
@@ -245,14 +265,21 @@ export default function Schedule() {
       <Card>
         <Calendar month={month} onMonth={setMonth} selected={day} onSelect={tap}
           isSelected={mode === 'multi' ? (k) => picked.has(k) : undefined}
+          dayClass={(k) => openOn(k).length && hiddenReason(k)
+            ? 'border border-dashed border-cream/30 bg-transparent text-cream/45 hover:bg-cream/5'
+            : null}
           badge={(k, sel) => {
             if (mode === 'multi' && picked.has(k)) return <span className="text-ink">✓</span>
             const n = openOn(k).length
             if (!n) return <span className={sel ? 'text-ink' : 'text-cream/30'}>off</span>
             const hid = hiddenReason(k)
-            return <span className={sel ? 'text-ink' : hid ? 'text-cream/40' : 'font-bold text-rose'}>{hid ? '🙈' : n}</span>
+            return <span className={sel ? 'text-ink' : hid ? 'text-cream/40' : 'font-bold text-rose'}>{n}</span>
           }} />
-        <p className="pt-3 text-xs text-cream/50">Number = open times · 🙈 = hidden from clients · off = no open times</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 text-xs text-cream/60">
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 rounded bg-cream/10" />Showing to clients</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 rounded border border-dashed border-cream/40" />Hidden from clients</span>
+          <span>Number = times · off = no times</span>
+        </div>
       </Card>
 
       <ErrorText>{err}</ErrorText>
@@ -308,8 +335,13 @@ export default function Schedule() {
 
       {mode === 'day' && day && (
         <Card className="space-y-4">
-          <h2 className="font-display text-xl font-semibold">{fmtDateLong(day)}</h2>
-          {reason && todays.length > 0 && <p className="rounded-xl bg-peach/10 p-2 text-xs font-semibold text-peach">{reasonText[reason]}</p>}
+          <div>
+            <h2 className="font-display text-xl font-semibold">{fmtDateLong(day)}</h2>
+            <div className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${reason ? 'border border-dashed border-cream/35 text-cream/60' : 'bg-rose/15 text-rose'}`}>
+              {reason ? 'Hidden from clients' : 'Showing to clients'}
+            </div>
+          </div>
+          {reason === 'month' && todays.length > 0 && <p className="rounded-xl bg-peach/10 p-2 text-xs font-semibold text-peach">{reasonText[reason]}</p>}
 
           <div>
             <div className="mb-2 text-sm font-semibold text-peach">Time slots</div>
@@ -318,10 +350,10 @@ export default function Schedule() {
               {dayList.map(({ t, open }) => {
                 const lock = bookedOn(day).includes(t)
                 return (
-                  <div key={t} className={`flex items-center gap-3 rounded-2xl border px-3 py-2 ${open ? 'border-rose/50 bg-rose/10' : 'border-cream/10 bg-ink/40'}`}>
+                  <div key={t} className={`flex items-center gap-3 rounded-2xl border px-3 py-2 ${open && !reason ? 'border-rose/50 bg-rose/10' : open ? 'border-dashed border-cream/25 bg-ink/30' : 'border-cream/10 bg-ink/40'}`}>
                     <div className="min-w-0 flex-1">
                       <div className={`font-semibold ${open ? '' : 'text-cream/50 line-through'}`}>{label(t)}{lock && ' 🔒'}</div>
-                      <div className="text-xs text-cream/60">{lock ? 'Booked' : open ? 'Open' : 'Closed'}</div>
+                      <div className="text-xs text-cream/60">{lock ? 'Booked' : !open ? 'Closed · clients can’t book it' : reason ? 'Ready · shows once the day is shown' : 'Open'}</div>
                     </div>
                     {!open && <button className="min-h-11 px-2 text-sm font-semibold text-peach underline" onClick={() => setTimeOpen(t, true)}>Reopen</button>}
                     <button aria-label={`Remove ${label(t)}`} disabled={lock} onClick={() => setDelTime(t)}
