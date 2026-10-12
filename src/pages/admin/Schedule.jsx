@@ -250,7 +250,8 @@ export default function Schedule() {
   const weekLabel = (ds) => ds.length === 1 ? format(parseISO(ds[0]), 'MMM d') : `${format(parseISO(ds[0]), 'MMM d')}–${format(parseISO(ds[ds.length - 1]), 'd')}`
   const weekPicked = (ds) => ds.every((k) => picked.has(k))
   const toggleWeek = (ds) => setPicked((st) => { const n = new Set(st); const all = ds.every((k) => n.has(k)); ds.forEach((k) => (all ? n.delete(k) : n.add(k))); return n })
-  const pickedHidden = pickedList.filter((k) => days.find((d) => d.day === k)?.visible === false).length
+  const pickedWork = pickedList.filter((k) => slotsOn(k).length > 0) // show/hide only matters for work days
+  const pickedHidden = pickedWork.filter((k) => hiddenReason(k)).length
   const drow = day && days.find((d) => d.day === day)
   const todays = day ? slotsOn(day) : []
   const dayList = day ? daySlots(day).sort((x, y) => (x.t < y.t ? -1 : 1)) : []
@@ -337,24 +338,24 @@ export default function Schedule() {
             </div>
           </div>
           {picked.size > 0 && <p className="text-xs text-cream/60">{pickedList.map(fmtDate).join(', ')}</p>}
-          {picked.size > 0 && (
+          {pickedWork.length > 0 && (
             <div className="space-y-2 rounded-2xl border border-cream/10 bg-ink/40 p-3">
               <div className="font-semibold">Show or hide for clients</div>
               <div className="text-xs text-cream/70">
-                {pickedHidden ? `${pickedHidden} of the picked dates ${pickedHidden === 1 ? 'is' : 'are'} hidden right now.` : 'All picked dates are showing right now.'} Hiding keeps the times and any existing bookings; clients just can’t book those dates. Showing dates in a hidden month opens only those dates.
+                Applies to the {pickedWork.length} work day{pickedWork.length === 1 ? '' : 's'} you picked{pickedWork.length < picked.size ? ` (${picked.size - pickedWork.length} day${picked.size - pickedWork.length === 1 ? '' : 's'} off skipped)` : ''}. {pickedHidden ? `${pickedHidden} ${pickedHidden === 1 ? 'is' : 'are'} hidden right now.` : 'All of them are showing right now.'} Hiding keeps the times and any existing bookings; clients just can’t book those dates.
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Btn variant="ghost" className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedList, false)}>🙈 Hide</Btn>
-                <Btn className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedList, true)}>Show</Btn>
+                <Btn variant="ghost" className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedWork, false)}>🙈 Hide</Btn>
+                <Btn className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedWork, true)}>Show</Btn>
               </div>
             </div>
           )}
-          {picked.size > 0 && (
+          {offCount(pickedList) > 0 && (
             <div className="space-y-2 rounded-2xl border border-cream/10 bg-ink/40 p-3">
               <div className="font-semibold">Make days off</div>
               <div className="text-xs text-cream/70">Removes all the times on the picked dates, so they become days off. Booked times are kept.</div>
-              <Btn variant="ghost" className="w-full !min-h-11 text-sm" disabled={!offCount(pickedList)} onClick={() => setOffAsk(pickedList)}>
-                {offCount(pickedList) ? `Turn ${picked.size} date${picked.size === 1 ? '' : 's'} into days off` : 'Already days off'}
+              <Btn variant="ghost" className="w-full !min-h-11 text-sm" onClick={() => setOffAsk(pickedWork)}>
+                Turn {pickedWork.length} work day{pickedWork.length === 1 ? '' : 's'} into days off
               </Btn>
             </div>
           )}
