@@ -115,6 +115,15 @@ export default function Schedule() {
   const bookedOn = (k) => booked.filter((b) => b.slot_date === k).map((b) => hhmm(b.slot_time))
 
   // mirrors slot_visible() in the database
+  // off = no times · hidden = has times but clients can't see it · full = every time booked · open
+  function dayState(k) {
+    const open = openOn(k)
+    if (!open.length) return 'off'
+    if (hiddenReason(k)) return 'hidden'
+    const bk = bookedOn(k)
+    if (open.every((t) => bk.includes(t))) return 'full'
+    return 'open'
+  }
   function hiddenReason(k) {
     const m = months.find((x) => x.month === ymd(startOfMonth(parseISO(k))))
     if (!m || !m.visible) return 'month'
@@ -265,20 +274,27 @@ export default function Schedule() {
       <Card>
         <Calendar month={month} onMonth={setMonth} selected={day} onSelect={tap}
           isSelected={mode === 'multi' ? (k) => picked.has(k) : undefined}
-          dayClass={(k) => openOn(k).length && hiddenReason(k)
-            ? 'border border-dashed border-cream/30 bg-transparent text-cream/45 hover:bg-cream/5'
-            : null}
+          dayClass={(k) => {
+            const st = dayState(k)
+            if (st === 'off') return 'bg-transparent text-cream/35 hover:bg-cream/5'
+            if (st === 'hidden') return 'border border-dashed border-cream/35 bg-transparent text-cream/55 hover:bg-cream/5'
+            if (st === 'full') return 'border border-cream/25 bg-cream/10 hover:bg-cream/15'
+            return 'border border-rose/45 bg-rose/15 hover:bg-rose/25'
+          }}
           badge={(k, sel) => {
             if (mode === 'multi' && picked.has(k)) return <span className="text-ink">✓</span>
+            const st = dayState(k)
             const n = openOn(k).length
-            if (!n) return <span className={sel ? 'text-ink' : 'text-cream/30'}>off</span>
-            const hid = hiddenReason(k)
-            return <span className={sel ? 'text-ink' : hid ? 'text-cream/40' : 'font-bold text-rose'}>{n}</span>
+            if (st === 'off') return <span className={sel ? 'text-ink' : ''}>off</span>
+            if (st === 'full') return <span className={sel ? 'text-ink' : 'font-semibold text-cream/70'}>full</span>
+            return <span className={sel ? 'text-ink' : st === 'hidden' ? '' : 'font-bold text-rose'}>{n}</span>
           }} />
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 text-xs text-cream/60">
-          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 rounded bg-cream/10" />Showing to clients</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 rounded border border-dashed border-cream/40" />Hidden from clients</span>
-          <span>Number = times · off = no times</span>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-3 text-xs text-cream/65">
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 shrink-0 rounded border border-rose/45 bg-rose/15" />Work day, open</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 shrink-0 rounded border border-dashed border-cream/40" />Work day, hidden</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 shrink-0 rounded border border-cream/25 bg-cream/10" />Fully booked</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3.5 shrink-0 rounded text-center text-[9px] leading-[14px] text-cream/40">off</span>Day off (no times)</span>
+          <span className="col-span-2 text-cream/45">The number = how many times are on that day.</span>
         </div>
       </Card>
 
