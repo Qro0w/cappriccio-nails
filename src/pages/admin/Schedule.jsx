@@ -84,6 +84,7 @@ export default function Schedule() {
   const [delTime, setDelTime] = useState(null)
   const [editing, setEditing] = useState(null) // preset object, {} for new, null = closed
   const [delPreset, setDelPreset] = useState(null)
+  const [offAsk, setOffAsk] = useState(null) // list of dates to turn into days off
   const [replaceAsk, setReplaceAsk] = useState(null) // preset to apply in "replace" mode
 
   const load = useCallback(async () => {
@@ -211,6 +212,23 @@ export default function Schedule() {
     done(null, `${closedOld.length} closed time${closedOld.length === 1 ? '' : 's'} removed ✓`)
   }
 
+  // Day off = remove every time on the date(s). Booked times are kept (bookings are never deleted).
+  async function makeDaysOff(dates) {
+    setOffAsk(null); setErr(''); setMsg('')
+    let removed = 0, kept = 0
+    for (const d of dates) {
+      const bk = bookedOn(d)
+      const drop = slotsOn(d).filter((t) => !bk.includes(t))
+      kept += slotsOn(d).length - drop.length
+      if (!drop.length) continue
+      const r = await supabase.from('schedule_slots').delete().eq('slot_date', d).in('slot_time', drop)
+      if (r.error) return done(r)
+      removed += drop.length
+    }
+    done(null, `${dates.length === 1 ? 'Day' : `${dates.length} days`} turned off ✓ (${removed} time${removed === 1 ? '' : 's'} removed)${kept ? `. ${kept} booked time${kept === 1 ? ' was' : 's were'} kept. Move or cancel ${kept === 1 ? 'that booking' : 'those bookings'} to fully clear the day.` : ''}`)
+  }
+  const offCount = (dates) => dates.reduce((n, d) => n + slotsOn(d).filter((t) => !bookedOn(d).includes(t)).length, 0)
+
   async function removePreset() {
     const p = delPreset; setDelPreset(null)
     done(await supabase.from('slot_presets').delete().eq('id', p.id))
@@ -331,6 +349,15 @@ export default function Schedule() {
               </div>
             </div>
           )}
+          {picked.size > 0 && (
+            <div className="space-y-2 rounded-2xl border border-cream/10 bg-ink/40 p-3">
+              <div className="font-semibold">Make days off</div>
+              <div className="text-xs text-cream/70">Removes all the times on the picked dates, so they become days off. Booked times are kept.</div>
+              <Btn variant="ghost" className="w-full !min-h-11 text-sm" disabled={!offCount(pickedList)} onClick={() => setOffAsk(pickedList)}>
+                {offCount(pickedList) ? `Turn ${picked.size} date${picked.size === 1 ? '' : 's'} into days off` : 'Already days off'}
+              </Btn>
+            </div>
+          )}
           {picked.size > 0 && <div className="pt-1 text-sm font-semibold text-peach">Fill with a preset</div>}
           {presets.length === 0 && <p className="text-sm text-cream/60">No presets yet. Make one below.</p>}
           {presets.map((p) => (
@@ -411,6 +438,8 @@ export default function Schedule() {
             </div>
           </div>
 
+          {offCount([day]) > 0 && <Btn variant="ghost" className="w-full" onClick={() => setOffAsk([day])}>Make this a day off</Btn>}
+
           <p className="text-xs text-cream/50">✕ = remove the time from this day. 🔒 = booked (can’t be removed). To stop clients booking a whole day without losing its times, switch off “Show this day to clients”. Changes show to clients right away and never delete bookings.</p>
         </Card>
       )}
@@ -438,6 +467,9 @@ export default function Schedule() {
       </Card>
 
       <ConfirmDialog open={!!delTime} danger title={`Remove ${delTime ? label(delTime) : ''}?`} body="This time is removed from this day completely. You can add it back any time." confirmLabel="Remove" onConfirm={removeTime} onCancel={() => setDelTime(null)} />
+      <ConfirmDialog open={!!offAsk} danger title={offAsk?.length === 1 ? 'Make this a day off?' : `Make ${offAsk?.length} days off?`}
+        body={offAsk ? `${offCount(offAsk)} time${offCount(offAsk) === 1 ? '' : 's'} will be removed${offAsk.length === 1 ? ` from ${fmtDate(offAsk[0])}` : ''}. Booked times stay. You can add times back any time.` : ''}
+        confirmLabel="Yes, make day off" onConfirm={() => makeDaysOff(offAsk)} onCancel={() => setOffAsk(null)} />
       <ConfirmDialog open={!!delPreset} danger title="Delete this preset?" body={`“${delPreset?.name}” will be removed. Dates already filled with it stay as they are.`} confirmLabel="Delete" onConfirm={removePreset} onCancel={() => setDelPreset(null)} />
       <ConfirmDialog open={!!replaceAsk} title={`Replace with “${replaceAsk?.name}”?`}
         body={`The ${picked.size} picked date(s) will have only these times: ${replaceAsk ? timesText(replaceAsk.times) : ''}. Other open times on those dates are removed, except booked ones.`}
