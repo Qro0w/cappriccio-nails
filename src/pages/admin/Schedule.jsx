@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { format, parseISO, startOfMonth } from 'date-fns'
+import { eachWeekOfInterval, endOfMonth, endOfWeek, format, isSameMonth, parseISO, startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
-import { ACTIVE, ALL_TIMES, RULESET_LABEL } from '../../lib/config'
+import { ACTIVE, RULESET_LABEL } from '../../lib/config'
 import { fmtDate, fmtDateLong, fmtTime, ymd } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, Switch, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
@@ -16,8 +16,13 @@ function PresetEditor({ preset, onSaved, onClose }) {
   const [times, setTimes] = useState(() => new Set(preset?.times || []))
   const [custom, setCustom] = useState('')
   const [err, setErr] = useState('')
-  const all = [...new Set([...ALL_TIMES, ...times])].sort()
-  const flip = (t) => setTimes((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n })
+  const list = [...times].sort()
+  const add = () => {
+    if (!custom) return
+    if (times.has(custom)) { setErr(`${label(custom)} is already in this preset.`); return }
+    setTimes((st) => new Set(st).add(custom)); setCustom(''); setErr('')
+  }
+  const remove = (t) => { setErr(''); setTimes((st) => { const n = new Set(st); n.delete(t); return n }) }
 
   async function save() {
     setErr('')
@@ -31,15 +36,25 @@ function PresetEditor({ preset, onSaved, onClose }) {
   return (
     <div className="space-y-3 rounded-2xl border-2 border-cream/15 bg-ink/40 p-3">
       <Field label="Preset name"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Weekday 4 slots" maxLength={40} /></Field>
-      <div className="grid grid-cols-3 gap-2">
-        {all.map((t) => (
-          <button key={t} type="button" onClick={() => flip(t)}
-            className={`min-h-11 rounded-xl border-2 text-sm font-semibold ${times.has(t) ? 'border-cream bg-cream text-ink' : 'border-cream/15 bg-ink text-cream/60'}`}>{label(t)}</button>
-        ))}
+      <div className="space-y-2">
+        <span className="text-sm font-semibold text-peach">Times</span>
+        {list.length === 0 ? (
+          <p className="text-xs text-cream/60">No times yet. Add the times for this preset below.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {list.map((t) => (
+              <span key={t} className="anim-in flex min-h-10 items-center gap-1 rounded-full border border-cream/30 bg-cream/[0.06] pl-3.5 pr-1 text-sm font-semibold">
+                {label(t)}
+                <button type="button" aria-label={`Remove ${label(t)}`} onClick={() => remove(t)}
+                  className="flex size-8 items-center justify-center rounded-full text-cream/60 hover:bg-red-500/20 hover:text-red-200">✕</button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex gap-2">
-        <input type="time" value={custom} onChange={(e) => setCustom(e.target.value)} className={inputCls + ' flex-1'} />
-        <Btn variant="ghost" disabled={!custom} onClick={() => { flip(custom); setCustom('') }}>Add</Btn>
+        <input type="time" value={custom} onChange={(e) => { setCustom(e.target.value); setErr('') }} className={inputCls + ' flex-1'} aria-label="Time to add" />
+        <Btn variant="ghost" disabled={!custom} onClick={add}>Add time</Btn>
       </div>
       <ErrorText>{err}</ErrorText>
       <div className="grid grid-cols-2 gap-2">
@@ -66,7 +81,6 @@ export default function Schedule() {
   const [custom, setCustom] = useState('')
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
-  const [closing, setClosing] = useState(false)
   const [delTime, setDelTime] = useState(null)
   const [editing, setEditing] = useState(null) // preset object, {} for new, null = closed
   const [delPreset, setDelPreset] = useState(null)
@@ -109,12 +123,36 @@ export default function Schedule() {
   }
 
   async function setMonthVisible(on) {
-    done(await supabase.from('schedule_months').upsert({ month: monthKey, visible: on, ruleset: mrow?.ruleset || 'sheet', window_days: mrow?.window_days ?? null }))
+    done(await supabase.from('schedule_months').upsert({ month: monthKey, visible: on, ruleset: mrow?.ruleset || 'sheet' }))
   }
   async function setDayFlag(k, patch) {
     const row = days.find((d) => d.day === k)
     done(await supabase.from('schedule_days').upsert({ day: k, visible: row?.visible ?? true, allow_any: row?.allow_any ?? false, ...patch }))
   }
+  // Show / hide many dates at once (keeps each day's "any service" setting)
+  async function setDaysVisible(dates, visible) {
+    setErr(''); setMsg('')
+    const flag = (k, v) => ({ day: k, visible: v, allow_any: days.find((d) => d.day === k)?.allow_any ?? false })
+    const rows = dates.map((k) => flag(k, visible))
+    let opened = 0
+    if (visible) {
+      // Showing dates in a month that's hidden: open the month, but keep its other dates hidden
+      const hiddenMonths = [...new Set(dates.map((k) => k.slice(0, 7) + '-01'))].filter((mk) => !months.find((m) => m.month === mk)?.visible)
+      for (const mk of hiddenMonths) {
+        const start = parseISO(mk)
+        for (let d = start; isSameMonth(d, start); d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+          const k = ymd(d)
+          if (!dates.includes(k)) rows.push(flag(k, false))
+        }
+        const r = await supabase.from('schedule_months').upsert({ month: mk, visible: true, ruleset: months.find((m) => m.month === mk)?.ruleset || 'sheet' })
+        if (r.error) return done(r)
+        opened++
+      }
+    }
+    done(await supabase.from('schedule_days').upsert(rows),
+      `${dates.length} date${dates.length === 1 ? '' : 's'} ${visible ? 'shown to' : 'hidden from'} clients ✓${opened ? ' The rest of that month stays hidden.' : ''}`)
+  }
+
   async function addTime(t) {
     if (!t) return
     if (slotsOn(day).includes(t)) return setErr('That time is already on this day.')
@@ -151,11 +189,6 @@ export default function Schedule() {
     }
     done(null, `“${preset.name}” applied to ${dates.length} date${dates.length === 1 ? '' : 's'} ✓${kept ? ` (${kept} booked time${kept === 1 ? '' : 's'} kept)` : ''}`)
   }
-  async function closeDay() {
-    setClosing(false)
-    if (bookedOn(day).length) return setErr('This day has active bookings. Move or reject them first.')
-    done(await supabase.from('schedule_slots').delete().eq('slot_date', day))
-  }
   async function removePreset() {
     const p = delPreset; setDelPreset(null)
     done(await supabase.from('slot_presets').delete().eq('id', p.id))
@@ -168,10 +201,19 @@ export default function Schedule() {
 
   const seg = (on) => `min-h-11 flex-1 rounded-xl text-sm font-semibold ${on ? 'bg-cream text-ink' : 'text-cream/70'}`
   const pickedList = [...picked].sort()
+  // Weeks of the month shown (Sun–Sat), only the dates inside this month
+  const weeks = eachWeekOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }).map((w) => {
+    const ds = []
+    for (let d = new Date(w); d <= endOfWeek(w); d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) if (isSameMonth(d, month)) ds.push(ymd(d))
+    return ds
+  })
+  const weekLabel = (ds) => ds.length === 1 ? format(parseISO(ds[0]), 'MMM d') : `${format(parseISO(ds[0]), 'MMM d')}–${format(parseISO(ds[ds.length - 1]), 'd')}`
+  const weekPicked = (ds) => ds.every((k) => picked.has(k))
+  const toggleWeek = (ds) => setPicked((st) => { const n = new Set(st); const all = ds.every((k) => n.has(k)); ds.forEach((k) => (all ? n.delete(k) : n.add(k))); return n })
+  const pickedHidden = pickedList.filter((k) => days.find((d) => d.day === k)?.visible === false).length
   const drow = day && days.find((d) => d.day === day)
   const todays = day ? slotsOn(day) : []
   const dayList = day ? daySlots(day).sort((x, y) => (x.t < y.t ? -1 : 1)) : []
-  const suggestions = ALL_TIMES.filter((t) => !todays.includes(t))
   const reason = day && hiddenReason(day)
   const reasonText = { month: 'The whole month is hidden from clients.', day: 'You turned this day off for clients.' }
 
@@ -192,11 +234,12 @@ export default function Schedule() {
             {RULESET_LABEL[mrow.ruleset]}
           </p>
         )}
+        <p className="text-xs text-cream/50">Opening a couple of weeks at a time? Use <b>Many days</b> → pick the weeks → <b>Show</b>. That opens just those weeks, even if the month is hidden.</p>
       </Card>
 
       <div className="flex gap-1 rounded-2xl bg-cream/5 p-1">
         <button className={seg(mode === 'day')} onClick={() => setMode('day')}>Edit one day</button>
-        <button className={seg(mode === 'multi')} onClick={() => { setMode('multi'); setMsg('') }}>Fill many days</button>
+        <button className={seg(mode === 'multi')} onClick={() => { setMode('multi'); setMsg('') }}>Many days</button>
       </div>
 
       <Card>
@@ -221,7 +264,31 @@ export default function Schedule() {
             <h2 className="font-display text-xl font-semibold">{picked.size ? `${picked.size} date${picked.size === 1 ? '' : 's'} picked` : 'Tap dates to pick them'}</h2>
             {picked.size > 0 && <button className="min-h-11 text-sm font-semibold text-peach underline" onClick={() => setPicked(new Set())}>Clear</button>}
           </div>
+          <div className="space-y-1.5">
+            <div className="text-sm font-semibold text-peach">Pick whole weeks</div>
+            <div className="flex flex-wrap gap-2">
+              {weeks.map((ds) => (
+                <button key={ds[0]} type="button" onClick={() => toggleWeek(ds)}
+                  className={`min-h-10 rounded-full border px-3 text-sm font-semibold transition-colors ${weekPicked(ds) ? 'border-cream bg-cream text-ink' : 'border-cream/20 bg-ink/40 text-cream/80'}`}>
+                  {weekPicked(ds) && '✓ '}{weekLabel(ds)}
+                </button>
+              ))}
+            </div>
+          </div>
           {picked.size > 0 && <p className="text-xs text-cream/60">{pickedList.map(fmtDate).join(', ')}</p>}
+          {picked.size > 0 && (
+            <div className="space-y-2 rounded-2xl border border-cream/10 bg-ink/40 p-3">
+              <div className="font-semibold">Show or hide for clients</div>
+              <div className="text-xs text-cream/70">
+                {pickedHidden ? `${pickedHidden} of the picked dates ${pickedHidden === 1 ? 'is' : 'are'} hidden right now.` : 'All picked dates are showing right now.'} Hiding keeps the times and any existing bookings; clients just can’t book those dates. Showing dates in a hidden month opens only those dates.
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Btn variant="ghost" className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedList, false)}>🙈 Hide</Btn>
+                <Btn className="!min-h-11 text-sm" onClick={() => setDaysVisible(pickedList, true)}>Show</Btn>
+              </div>
+            </div>
+          )}
+          {picked.size > 0 && <div className="pt-1 text-sm font-semibold text-peach">Fill with a preset</div>}
           {presets.length === 0 && <p className="text-sm text-cream/60">No presets yet. Make one below.</p>}
           {presets.map((p) => (
             <div key={p.id} className="space-y-2 rounded-2xl border border-cream/10 bg-ink/40 p-3">
@@ -254,9 +321,9 @@ export default function Schedule() {
                   <div key={t} className={`flex items-center gap-3 rounded-2xl border px-3 py-2 ${open ? 'border-rose/50 bg-rose/10' : 'border-cream/10 bg-ink/40'}`}>
                     <div className="min-w-0 flex-1">
                       <div className={`font-semibold ${open ? '' : 'text-cream/50 line-through'}`}>{label(t)}{lock && ' 🔒'}</div>
-                      <div className="text-xs text-cream/60">{lock ? 'Booked' : open ? 'Open' : 'Closed for now'}</div>
+                      <div className="text-xs text-cream/60">{lock ? 'Booked' : open ? 'Open' : 'Closed'}</div>
                     </div>
-                    <Switch checked={open} disabled={lock} onChange={(v) => setTimeOpen(t, v)} label={`${label(t)} open`} />
+                    {!open && <button className="min-h-11 px-2 text-sm font-semibold text-peach underline" onClick={() => setTimeOpen(t, true)}>Reopen</button>}
                     <button aria-label={`Remove ${label(t)}`} disabled={lock} onClick={() => setDelTime(t)}
                       className="flex size-11 shrink-0 items-center justify-center rounded-full text-lg text-cream/70 hover:bg-cream/10 disabled:opacity-25">✕</button>
                   </div>
@@ -267,13 +334,6 @@ export default function Schedule() {
 
           <div className="space-y-2">
             <div className="text-sm font-semibold text-peach">Add a time</div>
-            {suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {suggestions.map((t) => (
-                  <button key={t} onClick={() => addTime(t)} className="min-h-10 rounded-full border border-cream/20 bg-ink/40 px-3 text-sm font-semibold text-cream/80">+ {label(t)}</button>
-                ))}
-              </div>
-            )}
             <div className="flex gap-2">
               <input type="time" value={custom} onChange={(e) => setCustom(e.target.value)} className={inputCls + ' flex-1'} />
               <Btn variant="ghost" disabled={!custom} onClick={() => { addTime(custom); setCustom('') }}>Add</Btn>
@@ -303,8 +363,7 @@ export default function Schedule() {
             </div>
           </div>
 
-          {todays.length > 0 && <Btn variant="danger" className="w-full" onClick={() => setClosing(true)}>Remove all times for this day</Btn>}
-          <p className="text-xs text-cream/50">Switch off = closed but kept on the day. ✕ = removed from the day. 🔒 = booked (can’t be closed or removed). Changes show to clients right away and never delete bookings.</p>
+          <p className="text-xs text-cream/50">✕ = remove the time from this day. 🔒 = booked (can’t be removed). To stop clients booking a whole day without losing its times, switch off “Show this day to clients”. Changes show to clients right away and never delete bookings.</p>
         </Card>
       )}
 
@@ -330,7 +389,6 @@ export default function Schedule() {
         ))}
       </Card>
 
-      <ConfirmDialog open={closing} danger title="Remove all times?" body="All open times on this date will be removed so clients can't book it." confirmLabel="Yes, remove" onConfirm={closeDay} onCancel={() => setClosing(false)} />
       <ConfirmDialog open={!!delTime} danger title={`Remove ${delTime ? label(delTime) : ''}?`} body="This time is removed from this day completely. You can add it back any time." confirmLabel="Remove" onConfirm={removeTime} onCancel={() => setDelTime(null)} />
       <ConfirmDialog open={!!delPreset} danger title="Delete this preset?" body={`“${delPreset?.name}” will be removed. Dates already filled with it stay as they are.`} confirmLabel="Delete" onConfirm={removePreset} onCancel={() => setDelPreset(null)} />
       <ConfirmDialog open={!!replaceAsk} title={`Replace with “${replaceAsk?.name}”?`}

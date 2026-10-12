@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseISO, startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
-import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, priceBreakdown, removalOptions } from '../../lib/config'
+import { IG_DM_URL, IG_HANDLE, INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, priceBreakdown, removalOptions } from '../../lib/config'
 import { policiesFrom, policyVersionFrom, usePublicSettings } from '../../lib/publicSettings'
 import { EmptyState, Skeleton } from '../../components/Feedback'
 import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted, POLICY_INTRO } from '../../lib/content'
 import Rich from '../../components/Rich'
+import { IgIcon } from '../../components/Icons'
 import { cleanIg, cleanPhone, fmtDate, fmtTime, peso, validPhone } from '../../lib/format'
 import { BackLink, Btn, Card, ErrorText, Field, FieldError, FormAlert, Shell, inputCls, scrollToFirst } from '../../components/ui'
 import Calendar from '../../components/Calendar'
@@ -108,7 +109,7 @@ function Build({ form, setForm, onNext, onBack }) {
       {form.service && (
         <section className="space-y-3">
           <h2 id="f-tier" className="scroll-mt-24 font-display text-[1.45rem] italic text-rose">3. Design tier level</h2>
-          <p className="-mt-2 text-sm text-cream/80">Tiers are not about price. They’re about how intricate the design is.</p>
+          <p className="-mt-2 text-sm text-cream/80">Tiers are not about price. They’re about how intricate the design is. If you’re unsure which tier to pick, you can message <Rich text="@cappriccio.nails" /> on Instagram after you’ve completed your booking.</p>
           <FieldError>{err('f-tier')}</FieldError>
           <TierPicker value={form.tier} onChange={(n) => set('tier', n)} />
           <p className="text-xs text-cream/70">{TIER_NOTE}</p>
@@ -204,7 +205,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                 return <span className={cls}>{n ? `${n} open` : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
               }}
             />
-            {slots.length === 0 && <div className="pt-3"><EmptyState icon="☾" title="No dates open right now">New dates are added regularly. Please check back soon or message <Rich text="@cappriccio.nails" />.</EmptyState></div>}
+            {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
           </Card>
           {day && byDate[day] && (
             <Card className="space-y-2">
@@ -298,7 +299,15 @@ export default function Book() {
   const cfg = usePublicSettings()
   const version = policyVersionFrom(cfg)
   const [step, setStep] = useState(null)
-  useEffect(() => { if (cfg && step === null) setStep(policyAccepted(version) ? 'build' : 'policy') }, [cfg, step, version])
+  const [full, setFull] = useState(null) // true = every published slot is booked (or none are published)
+  useEffect(() => {
+    let alive = true
+    supabase.rpc('get_slots', { p_service: 'biab', p_tier: 1, p_removal: 'none' }).then(({ data, error }) => {
+      if (alive) setFull(!error && Array.isArray(data) && !data.some((x) => x.state !== 'taken'))
+    }, () => alive && setFull(false))
+    return () => { alive = false }
+  }, [])
+  useEffect(() => { if (cfg && full === false && step === null) setStep(policyAccepted(version) ? 'build' : 'policy') }, [cfg, full, step, version])
   const [form, setForm] = useState(EMPTY)
   const [pick, setPick] = useState(null)
   useEffect(() => {
@@ -307,7 +316,16 @@ export default function Book() {
   }, [step])
   return (
     <Shell>
-      {step === null && <Skeleton lines={5} className="pt-6" />}
+      {step === null && full !== true && <Skeleton lines={5} className="pt-6" />}
+      {step === null && full === true && (
+        <div className="space-y-4">
+          <BackLink to="/">Back</BackLink>
+          <EmptyState icon="☾" title="No slots available right now">
+            All the open slots are booked. Please check back another time.
+          </EmptyState>
+          <Btn as="a" href={IG_DM_URL} target="_blank" rel="noreferrer" variant="ghost" className="w-full gap-2"><IgIcon />Message {IG_HANDLE}</Btn>
+        </div>
+      )}
       {step === 'policy' && <PolicyGate policies={policiesFrom(cfg)} intro={POLICY_INTRO} onBack={<BackLink to="/">Back</BackLink>} onAgree={() => { savePolicyAccepted(version); setStep('build') }} />}
       {step === 'build' && <Build form={form} setForm={setForm} onBack={() => nav('/')} onNext={() => { setPick(null); setStep('slot') }} />}
       {step === 'slot' && <SlotStep form={form} pick={pick} setPick={setPick} onBack={() => setStep('build')} onNext={() => setStep('review')} />}

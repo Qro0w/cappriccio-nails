@@ -85,9 +85,6 @@ export const POLICIES = [
   },
 ]
 
-// Shown on the client's booking page for rescheduling / cancelling (same wording as above)
-export const CHANGE_LINES = [resched_day, resched_rule, resched_once, cancel_72, cancel_48]
-
 // ---------- "Additional reminders after they paid" (doc page 6). Shown only after confirmation. ----------
 // seatedBy = the booked time + 15 minutes (the doc's "N:15"), worked out per booking.
 export const reminders = (seatedBy) => [
