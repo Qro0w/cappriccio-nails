@@ -74,11 +74,15 @@ export const STATUS = {
 }
 export const ACTIVE = ['awaiting_payment', 'payment_submitted', 'confirmed']
 
-export const HISTORY_FILTERS = [
-  ['all', 'All', null],
-  ['awaiting_payment', 'Unpaid', ['awaiting_payment']],
+// "Active" tab: bookings still in progress
+export const ACTIVE_FILTERS = [
   ['payment_submitted', 'Pending', ['payment_submitted']],
+  ['awaiting_payment', 'Unpaid', ['awaiting_payment']],
   ['confirmed', 'Confirmed', ['confirmed']],
+]
+// "History" tab: post-appointment results only
+export const HISTORY_FILTERS = [
+  ['all', 'All', ['completed', 'cancelled', 'rejected', 'expired', 'no_show']],
   ['completed', 'Completed', ['completed']],
   ['cancelled', 'Cancelled', ['cancelled']],
   ['rejected', 'Rejected', ['rejected']],

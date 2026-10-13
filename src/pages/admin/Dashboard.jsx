@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { startOfMonth } from 'date-fns'
 import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
-import { ACTIVE, HISTORY_FILTERS, REMOVALS, SERVICES } from '../../lib/config'
+import { ACTIVE, ACTIVE_FILTERS, HISTORY_FILTERS, REMOVALS, SERVICES } from '../../lib/config'
 import { balanceOf, fmtDateLong, fmtTime, peso, slotStart, ymd } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, StatusBadge, inputCls } from '../../components/ui'
 import { EmptyState, Skeleton } from '../../components/Feedback'
@@ -20,7 +20,8 @@ export default function Dashboard() {
   const [view, setView] = useState('today')
   const [quick, setQuick] = useState(null) // { b, status }
   const [qBusy, setQBusy] = useState(false)
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('all') // History filter
+  const [aFilter, setAFilter] = useState('payment_submitted') // Active filter
   const [q, setQ] = useState('')
   const [month, setMonth] = useState(startOfMonth(new Date()))
   const [day, setDay] = useState(ymd(new Date()))
@@ -52,20 +53,26 @@ export default function Dashboard() {
     return m
   }, [rows])
 
-  const upcoming = useMemo(() => (rows || []).filter((r) => ACTIVE.includes(r.status) && r.slot_date >= today), [rows, today])
+  const needle = q.trim().toLowerCase().replace(/^@/, '')
+  const matches = (r) => !needle || [r.full_name, r.instagram, r.phone, r.code].some((v) => (v || '').toLowerCase().includes(needle))
+  const statusesOf = (filters, key) => filters.find((f) => f[0] === key)?.[2] || []
 
+  // Active: Pending & Unpaid = first come first served (booked earliest first); Confirmed = soonest appointment first
+  const active = useMemo(() => {
+    const st = statusesOf(ACTIVE_FILTERS, aFilter)
+    const list = (rows || []).filter((r) => st.includes(r.status) && matches(r))
+    return aFilter === 'confirmed'
+      ? list.sort((a, b) => (a.slot_date + a.slot_time < b.slot_date + b.slot_time ? -1 : 1))
+      : list.sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
+  }, [rows, aFilter, needle]) // eslint-disable-line
+
+  // History: most recent first, whatever the filter
   const history = useMemo(() => {
-    const st = HISTORY_FILTERS.find((f) => f[0] === filter)?.[2]
-    const needle = q.trim().toLowerCase().replace(/^@/, '')
+    const st = statusesOf(HISTORY_FILTERS, filter)
     const last = (r) => r.updated_at || r.created_at
-    return [...(rows || [])].sort((a, b) => (last(a) < last(b) ? 1 : -1)).filter((r) =>
-      (!st || st.includes(r.status)) &&
-      (!needle || [r.full_name, r.instagram, r.phone, r.code].some((v) => v.toLowerCase().includes(needle))))
-  }, [rows, filter, q])
-  const countFor = (key) => {
-    const st = HISTORY_FILTERS.find((f) => f[0] === key)?.[2]
-    return (rows || []).filter((r) => !st || st.includes(r.status)).length
-  }
+    return (rows || []).filter((r) => st.includes(r.status) && matches(r)).sort((a, b) => (last(a) < last(b) ? 1 : -1))
+  }, [rows, filter, needle]) // eslint-disable-line
+  const countFor = (filters) => (key) => { const st = statusesOf(filters, key); return (rows || []).filter((r) => st.includes(r.status)).length }
 
   const dayTimes = useMemo(() => {
     const t = new Set(slots.filter((s) => s.slot_date === day && s.is_open !== false).map((s) => s.slot_time))
@@ -87,7 +94,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-4">
       <Phrases />
-      <button onClick={() => { setView('history'); setFilter('payment_submitted') }}
+      <button onClick={() => { setView('active'); setAFilter('payment_submitted') }}
         className={`w-full rounded-2xl border p-4 text-left ${toCheck.length ? 'border-peach/50 bg-peach/10' : 'border-cream/20 bg-plum/55'}`}>
         <div className="text-2xl font-bold">{toCheck.length}</div>
         <div className="text-sm text-cream/80">{toCheck.length ? `receipt(s) to check (tap to view)` : action.length ? `Nothing to check · ${action.length} waiting for payment` : 'Nothing needs your attention 🎉'}</div>
@@ -98,8 +105,8 @@ export default function Dashboard() {
 
       <div className="flex gap-1 rounded-2xl bg-cream/5 p-1">
         <button className={seg(view === 'today')} onClick={() => setView('today')}>Today</button>
+        <button className={seg(view === 'active')} onClick={() => setView('active')}>Active</button>
         <button className={seg(view === 'calendar')} onClick={() => setView('calendar')}>Calendar</button>
-        <button className={seg(view === 'upcoming')} onClick={() => setView('upcoming')}>Upcoming</button>
         <button className={seg(view === 'history')} onClick={() => setView('history')}>History</button>
       </div>
 
@@ -166,10 +173,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      {view === 'upcoming' && (
+      {view === 'active' && (
         <div className="space-y-3">
-          {upcoming.length === 0 && <EmptyState icon="✿" title="No upcoming bookings yet">New bookings show up here as soon as clients reserve.</EmptyState>}
-          <div className="grid gap-3 lg:grid-cols-2">{upcoming.map((b) => <BookingRow key={b.id} b={b} checkHours={checkHours} showDate onExpire={load} />)}</div>
+          <input className={inputCls} placeholder="Search name, @instagram, phone or code" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="flex flex-wrap gap-2">
+            {ACTIVE_FILTERS.map(([key, label]) => (
+              <button key={key} onClick={() => setAFilter(key)}
+                className={`min-h-10 rounded-full border px-3 text-sm font-semibold ${aFilter === key ? 'border-cream bg-cream text-ink' : 'border-cream/25 text-cream/80'}`}>
+                {label} <span className="opacity-70">{countFor(ACTIVE_FILTERS)(key)}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-cream/60">{aFilter === 'confirmed' ? 'Soonest appointment first.' : 'First come, first served: whoever booked first is on top.'}</p>
+          {active.length === 0 && <EmptyState icon="✿" title="Nothing here">{q ? 'No bookings match your search.' : 'No bookings with this status right now.'}</EmptyState>}
+          <div className="grid gap-3 lg:grid-cols-2">{active.map((b) => <BookingRow key={b.id} b={b} checkHours={checkHours} showDate onExpire={load} />)}</div>
         </div>
       )}
 
@@ -180,7 +197,7 @@ export default function Dashboard() {
             {HISTORY_FILTERS.map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)}
                 className={`min-h-10 rounded-full border px-3 text-sm font-semibold ${filter === key ? 'border-cream bg-cream text-ink' : 'border-cream/25 text-cream/80'}`}>
-                {label} <span className="opacity-70">{countFor(key)}</span>
+                {label} <span className="opacity-70">{countFor(HISTORY_FILTERS)(key)}</span>
               </button>
             ))}
           </div>
