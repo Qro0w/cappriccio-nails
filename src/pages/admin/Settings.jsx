@@ -7,6 +7,7 @@ import { uid } from '../../lib/format'
 import { loadPublicSettings } from '../../lib/publicSettings'
 import { Skeleton } from '../../components/Feedback'
 import { Btn, Card, ErrorText, Field, inputCls } from '../../components/ui'
+import PushCard from '../../components/PushCard'
 
 const FIELDS = [
   ['gcash_number', 'GCash number', 'Shown to clients after they book'],
@@ -47,7 +48,7 @@ export default function Settings() {
     for (const [k, label] of [['min_dp', 'Minimum downpayment'], ['resubmit_hours', 'Hours to upload a new receipt'], ['check_reminder_hours', 'Remind me after']]) {
       if (!/^\d+$/.test(String(v[k] ?? '')) || Number(v[k]) < 1) return setErr(`${label}: please enter a whole number.`)
     }
-    const rows = Object.entries(v).filter(([key]) => !['hold_hours', 'gcash_qr_path', 'policies_json', 'policy_version'].includes(key)).map(([key, value]) => ({ key, value: String(value) }))
+    const rows = Object.entries(v).filter(([key]) => !['hold_hours', 'gcash_qr_path', 'policies_json', 'policy_version', 'notify_secret'].includes(key)).map(([key, value]) => ({ key, value: String(value) }))
     const { error } = await supabase.from('settings').upsert(rows)
     if (error) setErr('Could not save.')
     else { setMsg('Saved ✓'); loadPublicSettings(true) }
@@ -104,6 +105,7 @@ export default function Settings() {
         <Btn className="w-full" onClick={save}>Save settings</Btn>
         {msg && <p className="text-center text-sm text-emerald-200">{msg}</p>}
       </Card>
+      <PushCard />
       <Card className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-semibold">Policies</h2>

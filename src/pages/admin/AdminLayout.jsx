@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ConfirmDialog } from '../../components/ui'
 import { supabase } from '../../lib/supabase'
+import { setupAdminApp } from '../../lib/push'
 import { CornerWaves, Logo } from '../../components/Decor'
 import { Skeleton } from '../../components/Feedback'
 
@@ -10,6 +11,7 @@ export default function AdminLayout() {
   const [askOut, setAskOut] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const { pathname } = useLocation()
+  useEffect(() => { setupAdminApp() }, [])
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { setupAdminApp } from '../../lib/push'
 import { Btn, Card, ErrorText, Field, Shell, inputCls } from '../../components/ui'
 import { Logo } from '../../components/Decor'
 import Phrases from '../../components/Phrases'
 
 export default function Login() {
+  useEffect(() => { setupAdminApp() }, [])
   const nav = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
