@@ -32,8 +32,11 @@ export default function PushCard() {
     setBusy(true); say('')
     try {
       const r = await sendTestPush()
-      say(r?.sent ? 'Test sent ✓ It should pop up in a few seconds.' : 'No devices to send to yet. Turn notifications on first.', !r?.sent)
+      if (r?.sent) say(`Test sent to ${r.sent} device${r.sent === 1 ? '' : 's'} ✓ It should pop up in a few seconds.`)
+      else if (r?.errors?.length) say('The notification service refused it: ' + r.errors[0], true)
+      else say('No devices to send to yet. Tap “Turn off here”, then turn notifications on again.', true)
     } catch (e) {
+      if (e.message?.startsWith('detail:')) { say(e.message.slice(7), true); setBusy(false); return }
       say(e.message === 'setup' ? 'Notifications aren’t set up on the server yet (run 13_push_notifications.sql).' : 'The test couldn’t be sent. Check the “notify” function and its secrets in Supabase.', true)
     }
     setBusy(false)

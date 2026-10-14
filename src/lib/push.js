@@ -25,7 +25,14 @@ export async function pushStatus() {
   if (Notification.permission === 'denied') return 'blocked'
   const reg = await navigator.serviceWorker.getRegistration()
   const sub = await reg?.pushManager.getSubscription()
+  if (sub) await saveSub(sub) // make sure the server knows this device (e.g. if it was turned on before setup finished)
   return sub ? 'on' : 'off'
+}
+
+async function saveSub(sub) {
+  const j = sub.toJSON()
+  const { error } = await supabase.from('push_subscriptions').upsert({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, device: deviceName() })
+  return !error
 }
 
 const deviceName = () => {
@@ -45,9 +52,7 @@ export async function turnOnPush() {
   await navigator.serviceWorker.ready
   const sub = (await reg.pushManager.getSubscription()) ||
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(VAPID_PUBLIC_KEY) }))
-  const j = sub.toJSON()
-  const { error } = await supabase.from('push_subscriptions').upsert({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, device: deviceName() })
-  if (error) throw new Error('save')
+  if (!(await saveSub(sub))) throw new Error('save')
 }
 
 export async function turnOffPush() {
@@ -65,7 +70,11 @@ export async function sendTestPush() {
     headers: { 'x-notify-secret': data.value },
     body: { title: 'Test notification ✿', body: 'Notifications are working on this device.', url: '/admin' },
   })
-  if (error) throw new Error('function')
+  if (error) {
+    let detail = ''
+    try { detail = (await error.context?.json?.())?.error || '' } catch { /* ignore */ }
+    throw new Error(detail ? 'detail:' + detail : 'function')
+  }
   return res
 }
 
