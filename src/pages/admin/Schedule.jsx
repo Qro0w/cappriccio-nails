@@ -5,6 +5,7 @@ import { ACTIVE, RULESET_LABEL } from '../../lib/config'
 import { fmtDate, fmtDateLong, fmtTime, ymd } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, Switch, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
+import SlotsOverview from '../../components/SlotsOverview'
 
 const hhmm = (t) => t.slice(0, 5)
 const label = (t) => fmtTime(t.length === 5 ? t + ':00' : t)
@@ -84,6 +85,7 @@ export default function Schedule() {
   const [delTime, setDelTime] = useState(null)
   const [editing, setEditing] = useState(null) // preset object, {} for new, null = closed
   const [delPreset, setDelPreset] = useState(null)
+  const [overview, setOverview] = useState(false)
   const [offAsk, setOffAsk] = useState(null) // list of dates to turn into days off
   const [replaceAsk, setReplaceAsk] = useState(null) // preset to apply in "replace" mode
 
@@ -260,7 +262,16 @@ export default function Schedule() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="font-display text-3xl font-semibold">Schedule</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-semibold">Schedule</h1>
+        <button type="button" onClick={() => setOverview(true)} aria-label="Slots overview (download for story)" title="Slots overview"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-rose/70 bg-ink/40 text-cream transition hover:bg-rose/10 active:scale-95">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path d="M3.5 9.5h17M8 3v4M16 3v4M8 13.5h2M12 13.5h2M8 16.8h2" />
+          </svg>
+        </button>
+      </div>
+      <SlotsOverview open={overview} onClose={() => setOverview(false)} startMonth={startOfMonth(month)} />
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between gap-3">
