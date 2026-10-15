@@ -240,7 +240,21 @@ export default function MyBooking() {
             <Btn variant="soft" className="mt-2 w-full" onClick={() => document.getElementById('pay')?.scrollIntoView({ behavior: 'smooth' })}>🧾 Upload my receipt</Btn>
           </Card>
         )}
-        {dead && (
+        {b.status === 'rejected' && (
+          <Card className="space-y-3 text-center">
+            <div className="font-display text-xl font-semibold">Your booking wasn’t approved</div>
+            {b.status_note && (
+              <div className="rounded-2xl border border-red-300/30 bg-red-500/10 p-3 text-left text-sm">
+                <div className="text-xs font-semibold uppercase tracking-wider text-red-200">Reason</div>
+                <div className="mt-0.5 text-cream/90">{b.status_note}</div>
+              </div>
+            )}
+            <p className="text-sm text-cream/85">Please message <Rich text={IG_HANDLE} /> on Instagram for details.</p>
+            <Btn as="a" href={IG_DM_URL} target="_blank" rel="noreferrer" variant="soft" className="w-full gap-2"><IgIcon />Message {IG_HANDLE}</Btn>
+            <Btn as={Link} to="/book" variant="ghost" className="w-full">Book again</Btn>
+          </Card>
+        )}
+        {dead && b.status !== 'rejected' && (
           <Card className="space-y-2 text-center">
             <p className="text-sm">{b.status === 'expired' ? 'The 12-hour downpayment window ended, so this slot was released.' : 'This booking is no longer active.'}</p>
             <Btn as={Link} to="/book" className="w-full">Book again</Btn>

@@ -82,6 +82,8 @@ function prettyEvent(e) {
   return e.detail
 }
 
+const REJECT_REASONS = ['Receipt amount doesn’t match', 'Couldn’t verify the payment', 'Slot no longer available', 'Details incomplete']
+
 export default function BookingDetail() {
   const { id } = useParams()
   const nav = useNavigate()
@@ -92,6 +94,7 @@ export default function BookingDetail() {
   const [price, setPrice] = useState('')
   const [note, setNote] = useState('')
   const [dlg, setDlg] = useState(null)
+  const [rejectNote, setRejectNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
@@ -153,7 +156,22 @@ export default function BookingDetail() {
           {b.dp_amount != null && <span className="mt-1 block text-xs text-cream/60">Client typed ₱{b.dp_amount}. Change it if it’s different.</span>}
         </span>
       </span>) },
-    reject:   { status: 'rejected',  title: 'Reject this booking?', label: 'Yes, reject', danger: true, body: `This rejects ${b.full_name}'s booking on ${fmtDate(b.slot_date)} at ${fmtTime(b.slot_time)}. The slot opens for other clients right away. This can't be undone.` },
+    reject:   { status: 'rejected',  title: 'Reject this booking?', label: 'Yes, reject', danger: true, body: (
+      <span className="block space-y-3">
+        <span className="block">This rejects {b.full_name}’s booking on {fmtDate(b.slot_date)} at {fmtTime(b.slot_time)}. The slot opens for other clients right away. This can’t be undone.</span>
+        <span className="block">
+          <span className="mb-1 block text-sm font-semibold text-peach">Reason (optional, shown to the client)</span>
+          <span className="mb-2 flex flex-wrap gap-1.5">
+            {REJECT_REASONS.map((r) => (
+              <button key={r} type="button" onClick={() => setRejectNote(r)}
+                className={`min-h-9 rounded-full border px-3 text-xs font-semibold ${rejectNote === r ? 'border-cream bg-cream text-ink' : 'border-cream/25 text-cream/80'}`}>{r}</button>
+            ))}
+          </span>
+          <textarea className={inputCls + ' min-h-20 py-2'} maxLength={200} value={rejectNote} placeholder="e.g. The receipt amount doesn’t match"
+            onChange={(e) => setRejectNote(e.target.value)} />
+          <span className="mt-1 block text-xs text-cream/60">Leave blank to just tell them to message you on Instagram.</span>
+        </span>
+      </span>) },
     cancel:   { status: 'cancelled', title: 'Cancel this booking?', label: 'Yes, cancel it', danger: true, body: `This cancels ${b.full_name}'s confirmed booking on ${fmtDate(b.slot_date)} at ${fmtTime(b.slot_time)} and opens the slot. This can't be undone.` },
     complete: { status: 'completed', title: 'Mark as completed?', label: 'Yes, completed', body: 'The appointment is done.' },
     noshow:   { status: 'no_show',   title: 'Mark as no-show?', label: 'Yes, no-show', danger: true, body: `${b.full_name} did not show up. The slot will be opened.` },
@@ -166,8 +184,15 @@ export default function BookingDetail() {
       if (confirmAmt === '' || Number(confirmAmt) < 1) return setAmtTried(true)
       patch.dp_amount = Number(confirmAmt)
     }
+    if (dlg === 'reject') patch.status_note = rejectNote.trim() || null
     setBusy(true); setErr('')
-    const { error } = await supabase.from('bookings').update(patch).eq('id', b.id)
+    let { error } = await supabase.from('bookings').update(patch).eq('id', b.id)
+    if (error && dlg === 'reject' && /status_note/.test(error.message || '')) {
+      // 14_reject_reason.sql not run yet: still reject, just without the reason
+      delete patch.status_note
+      ;({ error } = await supabase.from('bookings').update(patch).eq('id', b.id))
+      if (!error) setErr('Rejected, but the reason wasn’t saved. Run 14_reject_reason.sql in Supabase to enable reasons.')
+    }
     setBusy(false); setDlg(null)
     if (error) return setErr('Could not update. Please try again.')
     load()
@@ -220,6 +245,7 @@ export default function BookingDetail() {
         <div className="font-display text-3xl font-semibold">{b.full_name}</div>
         <div className="break-all font-mono text-4xl font-bold tracking-wider text-rose">{b.code}</div>
         <div><StatusBadge status={b.status} /></div>
+        {b.status === 'rejected' && b.status_note && <p className="text-xs text-cream/70">Reason given: “{b.status_note}”</p>}
         <div className="text-lg">{fmtDateLong(b.slot_date)} · {fmtTime(b.slot_time)}</div>
         {b.status === 'awaiting_payment' && <div className="pt-1">⏳ <Countdown expiresAt={b.expires_at} onExpire={load} className="text-2xl" /> left to pay</div>}
       </Card>
@@ -239,7 +265,7 @@ export default function BookingDetail() {
           {b.status === 'payment_submitted' && (
             <Btn variant="ghost" className="w-full" onClick={() => { setAskReason(''); setAskTried(false); setAskOpen(true) }}>↺ Ask for a new receipt</Btn>
           )}
-          <Btn variant="danger" className="w-full" onClick={() => setDlg('reject')}>Reject booking</Btn>
+          <Btn variant="danger" className="w-full" onClick={() => { setRejectNote(''); setDlg('reject') }}>Reject booking</Btn>
         </div>
       )}
       {b.status === 'confirmed' && (
