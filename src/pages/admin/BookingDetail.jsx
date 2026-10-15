@@ -7,7 +7,7 @@ import { balanceOf, fmtDate, fmtDateLong, fmtTime, peso, ymd } from '../../lib/f
 import { Btn, Card, ConfirmDialog, ErrorText, Field, StatusBadge, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import Countdown from '../../components/Countdown'
-import Lightbox from '../../components/Lightbox'
+import ReceiptModal from '../../components/ReceiptModal'
 import { IgIcon } from '../../components/Icons'
 import Collapsible from '../../components/Collapsible'
 import ServiceFields, { serviceErrors } from '../../components/ServiceFields'
@@ -418,7 +418,7 @@ export default function BookingDetail() {
       </div>
       </div>
 
-      <Lightbox images={receipt ? [receipt] : []} index={view} onIndex={setView} onClose={() => setView(null)} />
+      <ReceiptModal url={receipt} open={view != null} onClose={() => setView(null)} />
       {delOpen && (
         <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
           <div className="rise-in w-full max-w-sm space-y-3 rounded-3xl border border-cream/20 bg-[#2a0612] p-5 shadow-2xl">

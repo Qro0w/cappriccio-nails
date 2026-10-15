@@ -16,12 +16,12 @@ export default function Lightbox({ images, index, onIndex, onClose }) {
   if (index == null || !n) return null
   let x0 = null
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-black/95"
+    <div className="fixed inset-0 z-[60] flex flex-col bg-black/95" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       onTouchStart={(e) => { x0 = e.touches[0].clientX }}
       onTouchEnd={(e) => { if (x0 == null || n < 2) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) onIndex((index + (dx < 0 ? 1 : -1) + n) % n) }}>
       <div className="flex items-center justify-between p-3 text-sm text-white/90">
         <span>{n > 1 ? `${index + 1} / ${n}` : ''}</span>
-        <button onClick={onClose} className="min-h-11 rounded-xl px-4 font-semibold">Close ✕</button>
+        <button onClick={onClose} className="min-h-11 rounded-full bg-white/15 px-4 font-semibold">Close ✕</button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center" onClick={onClose}>
         <img src={images[index]} alt="" className="max-h-full max-w-full object-contain" onClick={(e) => e.stopPropagation()} />

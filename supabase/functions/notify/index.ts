@@ -26,11 +26,12 @@ Deno.serve(async (req) => {
 
     const { title, body, url } = await req.json()
     if (!Deno.env.get('VAPID_PUBLIC_KEY') || !Deno.env.get('VAPID_PRIVATE_KEY')) return reply(500, { error: 'VAPID secrets are missing in Supabase → Edge Functions → Secrets' })
-    webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT') || 'mailto:hello@cappriccio.nails',
-      Deno.env.get('VAPID_PUBLIC_KEY')!,
-      Deno.env.get('VAPID_PRIVATE_KEY')!,
-    )
+    // Clean up pasted secrets (stray spaces/quotes break Apple's check). Apple only accepts a
+    // subject that is a plain "mailto:name@domain" or "https://..." with no spaces.
+    const clean = (v?: string) => (v || '').trim().replace(/^["']|["']$/g, '').replace(/\s+/g, '')
+    let subject = clean(Deno.env.get('VAPID_SUBJECT'))
+    if (!/^mailto:[^@\s]+@[^@\s]+\.[^@\s]+$/.test(subject) && !/^https:\/\/[^\s]+$/.test(subject)) subject = 'https://cappriccio-nails.vercel.app'
+    webpush.setVapidDetails(subject, clean(Deno.env.get('VAPID_PUBLIC_KEY')), clean(Deno.env.get('VAPID_PRIVATE_KEY')))
 
     const { data: subs } = await db.from('push_subscriptions').select('endpoint,p256dh,auth')
     const payload = JSON.stringify({ title: title || 'Cappriccio Nails', body: body || '', url: url || '/admin' })
