@@ -15,6 +15,7 @@ import Settings from './pages/admin/Settings'
 import Earnings from './pages/admin/Earnings'
 import NewBooking from './pages/admin/NewBooking'
 import PolicyEditor from './pages/admin/PolicyEditor'
+import Bebi from './pages/admin/Bebi'
 import ErrorBoundary from './components/ErrorBoundary'
 
 // Every page fades up gently when you open it
@@ -52,6 +53,7 @@ function AnimatedRoutes() {
           <Route path="earnings" element={<Earnings />} />
           <Route path="new" element={<NewBooking />} />
           <Route path="policies" element={<PolicyEditor />} />
+          <Route path="bebi" element={<Bebi />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
         <Route path="*" element={<NotFound />} />

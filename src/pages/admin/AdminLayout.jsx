@@ -39,6 +39,7 @@ export default function AdminLayout() {
           <NavLink to="/admin/earnings" className={tab}><span className={ic}>₱</span>Earnings</NavLink>
           <NavLink to="/admin/photos" className={tab}><span className={ic}>🖼</span>Photos</NavLink>
           <NavLink to="/admin/settings" className={tab}><span className={ic}>⚙️</span>Settings</NavLink>
+          <NavLink to="/admin/bebi" className={tab}><span className={ic}>♡</span>Bebi</NavLink>
           <button onClick={() => setAskOut(true)} className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-cream/60"><span className={ic}>↩</span>Sign out</button>
         </div>
       </nav>
