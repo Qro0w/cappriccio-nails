@@ -6,6 +6,7 @@ import { fmtDate, fmtDateLong, fmtTime, ymd } from '../../lib/format'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, Switch, inputCls } from '../../components/ui'
 import Calendar from '../../components/Calendar'
 import SlotsOverview from '../../components/SlotsOverview'
+import { useRemembered } from '../../lib/remember'
 
 const hhmm = (t) => t.slice(0, 5)
 const label = (t) => fmtTime(t.length === 5 ? t + ':00' : t)
@@ -72,12 +73,12 @@ export default function Schedule() {
   const [months, setMonths] = useState([])
   const [days, setDays] = useState([])
   const [presets, setPresets] = useState([])
-  const [month, setMonth] = useState(() => {
+  const [month, setMonth] = useRemembered('sc.month', () => {
     const now = startOfMonth(new Date())
     return now < new Date(2026, 10, 1) ? new Date(2026, 10, 1) : now // open on November while it's still October
   })
-  const [mode, setMode] = useState('day') // 'day' = edit one date, 'multi' = pick many dates
-  const [day, setDay] = useState(null)
+  const [mode, setMode] = useRemembered('sc.mode', 'day') // 'day' = edit one date, 'multi' = pick many dates
+  const [day, setDay] = useRemembered('sc.day', null)
   const [picked, setPicked] = useState(() => new Set())
   const [custom, setCustom] = useState('')
   const [err, setErr] = useState('')

@@ -12,6 +12,7 @@ import { IgIcon } from '../../components/Icons'
 import Collapsible from '../../components/Collapsible'
 import ServiceFields, { serviceErrors } from '../../components/ServiceFields'
 import { EmptyState, Skeleton } from '../../components/Feedback'
+import { useBack } from '../../lib/remember'
 
 function Reschedule({ b, onMoved }) {
   const [open, setOpen] = useState(false)
@@ -85,6 +86,7 @@ function prettyEvent(e) {
 const REJECT_REASONS = ['Receipt amount doesn’t match', 'Couldn’t verify the payment', 'Slot no longer available', 'Details incomplete']
 
 export default function BookingDetail() {
+  const back = useBack('/admin')
   const { id } = useParams()
   const nav = useNavigate()
   const [view, setView] = useState(null)
@@ -240,7 +242,7 @@ export default function BookingDetail() {
 
   return (
     <div className="space-y-4">
-      <Link to="/admin" className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back to bookings</Link>
+      <button type="button" onClick={back} className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back</button>
       <Card className="space-y-1 text-center">
         <div className="font-display text-3xl font-semibold">{b.full_name}</div>
         <div className="break-all font-mono text-4xl font-bold tracking-wider text-rose">{b.code}</div>

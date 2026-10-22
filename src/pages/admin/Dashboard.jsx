@@ -10,6 +10,7 @@ import { IgIcon } from '../../components/Icons'
 import Calendar from '../../components/Calendar'
 import BookingRow from '../../components/BookingRow'
 import Phrases from '../../components/Phrases'
+import { useRemembered, useRememberedScroll } from '../../lib/remember'
 
 const SHOWN_IN_DAY = [...ACTIVE, 'completed', 'no_show']
 const NEEDS_ACTION = ['awaiting_payment', 'payment_submitted']
@@ -17,15 +18,16 @@ const NEEDS_ACTION = ['awaiting_payment', 'payment_submitted']
 export default function Dashboard() {
   const [rows, setRows] = useState(null)
   const [slots, setSlots] = useState([])
-  const [view, setView] = useState('today')
+  const [view, setView] = useRemembered('bk.view', 'today')
   const [quick, setQuick] = useState(null) // { b, status }
   const [qBusy, setQBusy] = useState(false)
-  const [filter, setFilter] = useState('all') // History filter
-  const [aFilter, setAFilter] = useState('payment_submitted') // Active filter
-  const [q, setQ] = useState('')
-  const [month, setMonth] = useState(startOfMonth(new Date()))
-  const [day, setDay] = useState(ymd(new Date()))
+  const [filter, setFilter] = useRemembered('bk.filter', 'all') // History filter
+  const [aFilter, setAFilter] = useRemembered('bk.aFilter', 'payment_submitted') // Active filter
+  const [q, setQ] = useRemembered('bk.q', '')
+  const [month, setMonth] = useRemembered('bk.month', () => startOfMonth(new Date()))
+  const [day, setDay] = useRemembered('bk.day', () => ymd(new Date()))
   const [checkHours, setCheckHours] = useState(12)
+  useRememberedScroll('bookings', rows !== null)
 
   const load = useCallback(async () => {
     await supabase.rpc('expire_stale')

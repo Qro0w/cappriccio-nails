@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { peso, ymd } from '../../lib/format'
 import { Card } from '../../components/ui'
 import { EmptyState, Skeleton } from '../../components/Feedback'
+import { useRemembered } from '../../lib/remember'
 
 const total = (b) => (b.final_price != null ? b.final_price : b.estimated_price)
 const PAID = ['confirmed', 'completed', 'no_show', 'cancelled']
@@ -26,7 +27,7 @@ function summarize(list) {
 
 export default function Earnings() {
   const [rows, setRows] = useState(null)
-  const [month, setMonth] = useState(startOfMonth(new Date()))
+  const [month, setMonth] = useRemembered('ea.month', () => startOfMonth(new Date()))
   useEffect(() => {
     supabase.from('bookings').select('status,slot_date,estimated_price,final_price,dp_amount,balance_paid,balance_method').then(({ data }) => setRows(data || []))
   }, [])

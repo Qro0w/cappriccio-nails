@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { POLICIES } from '../../lib/content'
 import { loadPublicSettings, policiesFrom } from '../../lib/publicSettings'
 import { Btn, Card, ConfirmDialog, ErrorText, Field, inputCls } from '../../components/ui'
 import { Skeleton } from '../../components/Feedback'
 import { PolicySections } from '../../components/PolicyGate'
+import { useBack } from '../../lib/remember'
 
 // Bullets as plain text: one per line; a line starting with "-" is a sub-point of the line above.
 const toText = (items) => items.map((it) => (typeof it === 'string' ? it : [it.text, ...it.sub.map((x) => `- ${x}`)].join('\n'))).join('\n')
@@ -24,6 +24,7 @@ const toEditable = (ps) => ps.map((g) => ({ title: g.title, teaser: g.teaser || 
 const fromEditable = (es) => es.map((e) => ({ title: e.title.trim(), teaser: e.teaser.trim(), items: fromText(e.body), ...(e.footnote.trim() ? { footnote: e.footnote.trim() } : {}) }))
 
 export default function PolicyEditor() {
+  const back = useBack('/admin/settings')
   const [secs, setSecs] = useState(null)
   const [tried, setTried] = useState(false)
   const [msg, setMsg] = useState('')
@@ -53,7 +54,7 @@ export default function PolicyEditor() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/admin/settings" className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back to settings</Link>
+      <button type="button" onClick={back} className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back</button>
       <h1 className="font-display text-3xl font-semibold">Edit policies</h1>
       <Card className="space-y-1 text-xs text-cream/70">
         <p>One bullet per line. Start a line with <b>-</b> to make it a sub-point of the line above.</p>

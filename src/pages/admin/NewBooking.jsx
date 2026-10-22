@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { calcPrice, intensiveAllowed, ALL_TIMES, ACTIVE, SERVICES } from '../../lib/config'
 import { cleanIg, cleanPhone, fmtTime, peso, validPhone, ymd } from '../../lib/format'
 import { Btn, Card, ErrorText, Field, FormAlert, inputCls } from '../../components/ui'
 import ServiceFields, { serviceErrors } from '../../components/ServiceFields'
+import { useBack } from '../../lib/remember'
 
 const label = (t) => fmtTime(t.length === 5 ? t + ':00' : t)
 
 // The nailtech books someone in herself (DMs, walk-ins, friends). No client rules apply.
 export default function NewBooking() {
+  const back = useBack('/admin')
   const nav = useNavigate()
   const [f, setF] = useState({ name: '', ig: '', phone: '', age: '', date: ymd(new Date()), time: '', custom: '', paid: 'yes', dp: '' })
   const [svc, setSvc] = useState({ service: '', length: '', removal: 'none', tier: '', intensive: false })
@@ -65,7 +67,7 @@ export default function NewBooking() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/admin" className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back to bookings</Link>
+      <button type="button" onClick={back} className="inline-flex min-h-11 items-center text-sm font-semibold text-peach">← Back</button>
       <h1 className="font-display text-3xl font-semibold">Add a booking</h1>
       <p className="text-sm text-cream/70">For clients who booked through DM, walk-ins or friends. Any date and time works, even ones that are closed or hidden from clients.</p>
 
