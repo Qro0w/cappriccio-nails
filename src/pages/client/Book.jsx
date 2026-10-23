@@ -180,11 +180,15 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', f) }
   }, []) // eslint-disable-line
 
+  // Bookable days (with their times) vs. days the nailtech hid that are coming up ("soon", no times)
   const byDate = useMemo(() => {
     const m = {}
-    ;(slots || []).forEach((s) => (m[s.slot_date] ||= []).push(s))
+    ;(slots || []).filter((s) => s.state !== 'soon').forEach((s) => (m[s.slot_date] ||= []).push(s))
     return m
   }, [slots])
+  const soonDays = useMemo(() => new Set((slots || []).filter((s) => s.state === 'soon').map((s) => s.slot_date)), [slots])
+  // A whole week she hid (no open days in it at all) shows "Available soon" across it
+  const weekBanner = (keys) => (keys.some((k) => soonDays.has(k)) && !keys.some((k) => byDate[k]) ? 'Available soon' : null)
 
   return (
     <div className="space-y-4">
@@ -198,12 +202,12 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
             <Calendar
               month={month} onMonth={setMonth} selected={day} onSelect={(d) => { setDay(d); setPick(null); setPickErr('') }}
               isDisabled={(k) => !byDate[k]}
+              weekBanner={weekBanner}
               badge={(k, sel) => {
                 const l = byDate[k]; if (!l) return null
                 const n = l.filter((s) => s.state === 'available').length
-                const soon = !n && l.some((s) => s.state === 'soon')
-                const cls = sel ? 'text-ink' : n ? 'text-rose' : soon ? 'text-peach/70' : 'text-cream/40'
-                return <span className={cls}>{n ? `${n} open` : soon ? 'soon' : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
+                const cls = sel ? 'text-ink' : n ? 'text-rose' : 'text-cream/40'
+                return <span className={cls}>{n ? `${n} open` : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
               }}
             />
             {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state === 'soon') ? 'More slots are available soon.' : slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
@@ -211,8 +215,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
           {day && byDate[day] && (
             <Card className="space-y-2">
               <h2 className="font-semibold text-peach">{fmtDate(day)}</h2>
-              {byDate[day].some((s) => s.state === 'soon') && <p className="rounded-xl border border-peach/25 bg-peach/10 px-3 py-2 text-sm text-peach">Available soon</p>}
-              {byDate[day].filter((s) => s.state !== 'soon').map((s) => {
+              {byDate[day].map((s) => {
                 const chosen = pick?.date === day && pick?.time === s.slot_time
                 const free = s.state === 'available'
                 return (
