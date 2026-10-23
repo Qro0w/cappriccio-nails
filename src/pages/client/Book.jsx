@@ -212,7 +212,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
             <Card className="space-y-2">
               <h2 className="font-semibold text-peach">{fmtDate(day)}</h2>
               {byDate[day].some((s) => s.state === 'soon') && <p className="rounded-xl border border-peach/25 bg-peach/10 px-3 py-2 text-sm text-peach">Available soon</p>}
-              {byDate[day].map((s) => {
+              {byDate[day].filter((s) => s.state !== 'soon').map((s) => {
                 const chosen = pick?.date === day && pick?.time === s.slot_time
                 const free = s.state === 'available'
                 return (
@@ -220,7 +220,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                     className={`flex min-h-12 w-full items-center justify-between rounded-xl border px-4 text-left
                       ${chosen ? 'border-cream bg-cream text-ink' : free ? 'border-cream/25 hover:bg-cream/10' : 'border-cream/10 text-cream/35'}`}>
                     <span className={`font-semibold ${s.state === 'taken' ? 'line-through' : ''}`}>{fmtTime(s.slot_time)}</span>
-                    <span className="text-xs">{chosen ? 'Selected' : free ? 'Open' : s.state === 'taken' ? 'Booked' : s.state === 'soon' ? 'Available soon' : 'Not available for your service'}</span>
+                    <span className="text-xs">{chosen ? 'Selected' : free ? 'Open' : s.state === 'taken' ? 'Booked' : 'Not available for your service'}</span>
                   </button>
                 )
               })}
