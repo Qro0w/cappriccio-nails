@@ -201,15 +201,17 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
               badge={(k, sel) => {
                 const l = byDate[k]; if (!l) return null
                 const n = l.filter((s) => s.state === 'available').length
-                const cls = sel ? 'text-ink' : n ? 'text-rose' : 'text-cream/40'
-                return <span className={cls}>{n ? `${n} open` : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
+                const soon = !n && l.some((s) => s.state === 'soon')
+                const cls = sel ? 'text-ink' : n ? 'text-rose' : soon ? 'text-peach/70' : 'text-cream/40'
+                return <span className={cls}>{n ? `${n} open` : soon ? 'soon' : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
               }}
             />
-            {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
+            {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state === 'soon') ? 'More slots are available soon.' : slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
           </Card>
           {day && byDate[day] && (
             <Card className="space-y-2">
               <h2 className="font-semibold text-peach">{fmtDate(day)}</h2>
+              {byDate[day].some((s) => s.state === 'soon') && <p className="rounded-xl border border-peach/25 bg-peach/10 px-3 py-2 text-sm text-peach">Available soon</p>}
               {byDate[day].map((s) => {
                 const chosen = pick?.date === day && pick?.time === s.slot_time
                 const free = s.state === 'available'
@@ -218,7 +220,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                     className={`flex min-h-12 w-full items-center justify-between rounded-xl border px-4 text-left
                       ${chosen ? 'border-cream bg-cream text-ink' : free ? 'border-cream/25 hover:bg-cream/10' : 'border-cream/10 text-cream/35'}`}>
                     <span className={`font-semibold ${s.state === 'taken' ? 'line-through' : ''}`}>{fmtTime(s.slot_time)}</span>
-                    <span className="text-xs">{chosen ? 'Selected' : free ? 'Open' : s.state === 'taken' ? 'Booked' : 'Not available for your service'}</span>
+                    <span className="text-xs">{chosen ? 'Selected' : free ? 'Open' : s.state === 'taken' ? 'Booked' : s.state === 'soon' ? 'Available soon' : 'Not available for your service'}</span>
                   </button>
                 )
               })}
@@ -300,10 +302,13 @@ export default function Book() {
   const version = policyVersionFrom(cfg)
   const [step, setStep] = useState(null)
   const [full, setFull] = useState(null) // true = every published slot is booked (or none are published)
+  const [soon, setSoon] = useState(false) // some hidden days are coming up ("Available soon")
   useEffect(() => {
     let alive = true
     supabase.rpc('get_slots', { p_service: 'biab', p_tier: 1, p_removal: 'none' }).then(({ data, error }) => {
-      if (alive) setFull(!error && Array.isArray(data) && !data.some((x) => x.state !== 'taken'))
+      if (!alive) return
+      setFull(!error && Array.isArray(data) && !data.some((x) => x.state === 'available' || x.state === 'unavailable'))
+      setSoon(!error && Array.isArray(data) && data.some((x) => x.state === 'soon'))
     }, () => alive && setFull(false))
     return () => { alive = false }
   }, [])
@@ -321,7 +326,7 @@ export default function Book() {
         <div className="space-y-4">
           <BackLink to="/">Back</BackLink>
           <EmptyState icon="☾" title="No slots available right now">
-            All the open slots are booked. Please check back another time.
+            {soon ? 'More slots are available soon.' : 'All the open slots are booked.'} Please check back another time.
           </EmptyState>
           <Btn as="a" href={IG_DM_URL} target="_blank" rel="noreferrer" variant="ghost" className="w-full gap-2"><IgIcon />Message {IG_HANDLE}</Btn>
         </div>

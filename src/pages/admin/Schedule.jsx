@@ -394,7 +394,7 @@ export default function Schedule() {
           <div>
             <h2 className="font-display text-xl font-semibold">{fmtDateLong(day)}</h2>
             <div className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${!todays.length ? 'bg-cream/10 text-cream/60' : reason ? 'border border-dashed border-cream/35 text-cream/60' : 'bg-rose/15 text-rose'}`}>
-              {!todays.length ? 'Day off' : reason ? 'Hidden from clients' : 'Showing to clients'}
+              {!todays.length ? 'Day off' : reason === 'day' ? 'Clients see “Available soon”' : reason ? 'Hidden from clients' : 'Showing to clients'}
             </div>
           </div>
           {reason === 'month' && todays.length > 0 && <p className="rounded-xl bg-peach/10 p-2 text-xs font-semibold text-peach">{reasonText[reason]}</p>}
@@ -446,7 +446,9 @@ export default function Schedule() {
               <Switch checked={drow?.allow_any ?? false} onChange={(v) => setDayFlag(day, { allow_any: v })} label="Any service, any time" />
             </div>
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-cream/10 p-3">
-              <div className="text-sm">Show this day to clients</div>
+              <div className="text-sm">Show this day to clients
+                <div className="text-xs text-cream/50">When off, clients see this day as “Available soon” but can’t book it.</div>
+              </div>
               <Switch checked={drow?.visible ?? true} onChange={(v) => setDayFlag(day, { visible: v })} label="Show this day" />
             </div>
           </div>}
