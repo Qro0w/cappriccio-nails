@@ -183,12 +183,15 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
   // Bookable days (with their times) vs. days the nailtech hid that are coming up ("soon", no times)
   const byDate = useMemo(() => {
     const m = {}
-    ;(slots || []).filter((s) => s.state !== 'soon').forEach((s) => (m[s.slot_date] ||= []).push(s))
+    ;(slots || []).filter((s) => !s.state.startsWith('soon')).forEach((s) => (m[s.slot_date] ||= []).push(s))
     return m
   }, [slots])
   const soonDays = useMemo(() => new Set((slots || []).filter((s) => s.state === 'soon').map((s) => s.slot_date)), [slots])
-  // A whole week she hid (no open days in it at all) shows "Available soon" across it
-  const weekBanner = (keys) => (keys.some((k) => soonDays.has(k)) && !keys.some((k) => byDate[k]) ? 'Available soon' : null)
+  const soonMonths = useMemo(() => new Set((slots || []).filter((s) => s.state === 'soon_month').map((s) => s.slot_date.slice(0, 7))), [slots])
+  // A whole week she hid (no open days in it at all), or a whole future month she hid, shows "Available soon"
+  const weekBanner = (keys) => (
+    (keys.length && soonMonths.has(keys[0].slice(0, 7))) || (keys.some((k) => soonDays.has(k)) && !keys.some((k) => byDate[k]))
+      ? 'Available soon' : null)
 
   return (
     <div className="space-y-4">
@@ -210,7 +213,7 @@ function SlotStep({ form, pick, setPick, onNext, onBack }) {
                 return <span className={cls}>{n ? `${n} open` : l.some((s) => s.state === 'taken') ? 'full' : '—'}</span>
               }}
             />
-            {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state === 'soon') ? 'More slots are available soon.' : slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
+            {!slots.some((x) => x.state === 'available') && <div className="pt-3"><EmptyState icon="☾" title="No slots available right now">{slots.some((x) => x.state.startsWith('soon')) ? 'More slots are available soon.' : slots.some((x) => x.state === 'taken') && slots.every((x) => x.state === 'taken') ? 'All the open slots are booked.' : 'There are no open slots for this service right now.'} Please check back another time.</EmptyState></div>}
           </Card>
           {day && byDate[day] && (
             <Card className="space-y-2">
@@ -311,7 +314,7 @@ export default function Book() {
     supabase.rpc('get_slots', { p_service: 'biab', p_tier: 1, p_removal: 'none' }).then(({ data, error }) => {
       if (!alive) return
       setFull(!error && Array.isArray(data) && !data.some((x) => x.state === 'available' || x.state === 'unavailable'))
-      setSoon(!error && Array.isArray(data) && data.some((x) => x.state === 'soon'))
+      setSoon(!error && Array.isArray(data) && data.some((x) => x.state.startsWith('soon')))
     }, () => alive && setFull(false))
     return () => { alive = false }
   }, [])
