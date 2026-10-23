@@ -27,7 +27,11 @@ export default function Calendar({ month, onMonth, selected, onSelect, badge, is
               {wk.map((d) => {
                 const key = format(d, 'yyyy-MM-dd')
                 if (!isSameMonth(d, month)) return <div key={key} />
-                if (banner) return <div key={key} aria-hidden="true" className="aspect-square" />
+                if (banner) return (
+                  <div key={key} aria-hidden="true" className="flex aspect-square flex-col items-center justify-center text-sm text-cream/10">
+                    <span className="font-semibold">{format(d, 'd')}</span><span className="h-3" />
+                  </div>
+                )
                 const off = isDisabled?.(key)
                 const sel = isSelected ? isSelected(key) : selected === key
                 return (
@@ -45,7 +49,7 @@ export default function Calendar({ month, onMonth, selected, onSelect, badge, is
               })}
               {banner && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center" role="note">
-                  <span className="rounded-full border border-peach/35 px-4 py-1 font-display text-[1.05rem] italic text-peach">{banner}</span>
+                  <span className="rounded-full border border-peach/70 bg-[#1e040c]/60 px-4 py-1 font-display text-[1.05rem] italic text-peach">{banner}</span>
                 </div>
               )}
             </div>
