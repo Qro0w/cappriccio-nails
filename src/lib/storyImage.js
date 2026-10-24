@@ -1,7 +1,8 @@
 // Draws the "slots overview" story image (1080×1920) on a canvas.
 // days: [{ key:'2026-11-05', d:5, col:0-6, row:n, times:[{label:'9:00 AM', booked:bool}] | null }]
+// banners: [[firstRow, lastRow]] — weeks covered by ONE "Available soon" label
 const W = 1080, H = 1920
-const CREAM = '#f3e6d0', ROSE = '#f2a1b5', DARK = '#3a0817'
+const CREAM = '#f3e6d0', ROSE = '#f2a1b5', DARK = '#3a0817', PEACH = '#ffd3a8'
 
 const imgCache = {}
 function loadImg(src) {
@@ -48,6 +49,14 @@ function pill(ctx, cx, cy, w, h, fill) {
   ctx.closePath(); ctx.fillStyle = fill; ctx.fill()
 }
 
+function outlinePill(ctx, cx, cy, w, h, stroke, fill, lw) {
+  const r = h / 2, x = cx - w / 2, y = cy - h / 2
+  ctx.beginPath()
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arc(x + w - r, y + r, r, -Math.PI / 2, Math.PI / 2)
+  ctx.lineTo(x + r, y + h); ctx.arc(x + r, y + r, r, Math.PI / 2, -Math.PI / 2)
+  ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke()
+}
+
 function bookedTime(ctx, label, cx, cy, size) {
   ctx.font = `600 ${size}px Inter`
   ctx.fillStyle = 'rgba(243,230,208,0.38)'
@@ -57,7 +66,7 @@ function bookedTime(ctx, label, cx, cy, size) {
   ctx.beginPath(); ctx.moveTo(cx - w / 2 - 2, cy); ctx.lineTo(cx + w / 2 + 2, cy); ctx.stroke()
 }
 
-export function drawStory(canvas, { title, subtitle, days, rows, footer }, assets) {
+export function drawStory(canvas, { title, subtitle, days, rows, banners = [], footer }, assets) {
   canvas.width = W; canvas.height = H
   const ctx = canvas.getContext('2d')
   ctx.textBaseline = 'middle'; ctx.textAlign = 'center'
@@ -95,16 +104,21 @@ export function drawStory(canvas, { title, subtitle, days, rows, footer }, asset
   // grid: row heights follow the busiest day in each row, scaled down if it would not fit
   const footerTop = H - 210
   const base = { num: 44, numH: 56, pillH: 32, gap: 5, font: 19, rowGap: 28 }
-  const maxTimes = Array.from({ length: rows }, (_, r) => Math.max(1, ...days.filter((d) => d.row === r).map((d) => (d.times ? d.times.length : 1))))
+  const soonRow = (r) => banners.some(([a, b]) => r >= a && r <= b)
+  const maxTimes = Array.from({ length: rows }, (_, r) => (soonRow(r) ? 1 : Math.max(1, ...days.filter((d) => d.row === r).map((d) => (d.times ? d.times.length : 1)))))
   const need = (s) => maxTimes.reduce((a, n) => a + base.numH * s + n * (base.pillH + base.gap) * s + base.rowGap * s, 0)
   const s = Math.min(1, (footerTop - y) / need(1))
   const pw = Math.min(colW - 8, 132)
 
   let ry = y
+  const rowTop = []
   for (let r = 0; r < rows; r++) {
+    rowTop.push(ry)
+    const soon = soonRow(r)
     days.filter((d) => d.row === r).forEach((d) => {
       const cx = left + colW * (d.col + 0.5)
-      ctx.fillStyle = CREAM; ctx.font = `400 ${base.num * s}px "Playfair Display"`
+      ctx.fillStyle = soon ? 'rgba(243,230,208,0.12)' : CREAM; ctx.font = `400 ${base.num * s}px "Playfair Display"`
+      if (soon) { ctx.fillText(String(d.d), cx, ry + (base.numH * s) / 2); return }
       ctx.fillText(String(d.d), cx, ry + (base.numH * s) / 2)
       let ty = ry + base.numH * s + (base.pillH * s) / 2
       if (!d.times) {
@@ -123,6 +137,16 @@ export function drawStory(canvas, { title, subtitle, days, rows, footer }, asset
     })
     ry += (base.numH + maxTimes[r] * (base.pillH + base.gap) + base.rowGap) * s
   }
+  rowTop.push(ry)
+
+  // one "Available soon" label centred over each run of hidden weeks
+  banners.forEach(([a, b]) => {
+    const cy = (rowTop[a] + rowTop[b + 1] - base.rowGap * s) / 2
+    ctx.font = 'italic 400 46px "Playfair Display"'
+    const tw = ctx.measureText('Available soon').width
+    outlinePill(ctx, W / 2, cy, tw + 80, 82, 'rgba(255,211,168,0.75)', 'rgba(30,4,12,0.6)', 3)
+    ctx.fillStyle = PEACH; ctx.fillText('Available soon', W / 2, cy + 2)
+  })
 
   // footer: legend + link
   const fy = H - 150

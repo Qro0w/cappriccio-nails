@@ -49,8 +49,11 @@ export default function SlotsOverview({ open, onClose, startMonth }) {
       const mv = data.months.find((x) => x.month === ymd(startOfMonth(parseISO(k))))?.visible
       return !!mv && data.days.find((x) => x.day === k)?.visible !== false
     }
+    const openTimes = (k) => data.slots.filter((x) => x.slot_date === k && x.is_open !== false).map((x) => hhmm(x.slot_time)).sort()
+    // hidden day/month that still has upcoming times = "Available soon" (same rule as the client calendar)
+    const soonOn = (k) => !shown(k) && openTimes(k).some((t) => slotStart(k, t + ':00') >= now)
     const timesOn = (k) => {
-      const ts = data.slots.filter((x) => x.slot_date === k && x.is_open !== false).map((x) => hhmm(x.slot_time)).sort()
+      const ts = openTimes(k)
       if (!ts.length || !shown(k)) return null
       return ts.map((t) => ({
         label: fmtTime(t + ':00'),
@@ -70,9 +73,18 @@ export default function SlotsOverview({ open, onClose, startMonth }) {
       subtitle = 'OPEN SLOTS'
       weekStart = startOfWeek(a)
     }
-    const days = dates.map((dt) => ({ key: ymd(dt), d: dt.getDate(), col: getDay(dt), row: differenceInCalendarWeeks(dt, weekStart), times: timesOn(ymd(dt)) }))
+    const days = dates.map((dt) => ({ key: ymd(dt), d: dt.getDate(), col: getDay(dt), row: differenceInCalendarWeeks(dt, weekStart), times: timesOn(ymd(dt)), soon: soonOn(ymd(dt)) }))
     const rows = Math.max(...days.map((x) => x.row)) + 1
-    return { title, subtitle, days, rows, footer: `Book at ${window.location.host} · @cappriccio.nails` }
+    // a week is "Available soon" when it has hidden upcoming days and nothing showing;
+    // a whole hidden month (that already has times) is "Available soon" from top to bottom
+    const monthSoon = mode === 'month' && !data.months.find((x) => x.month === ymd(startOfMonth(month)))?.visible && days.some((x) => x.soon)
+    const soonRow = Array.from({ length: rows }, (_, r) => {
+      const inRow = days.filter((x) => x.row === r)
+      return monthSoon || (inRow.some((x) => x.soon) && !inRow.some((x) => x.times))
+    })
+    const banners = [] // back-to-back soon weeks share one label: [firstRow, lastRow]
+    soonRow.forEach((on, r) => { if (!on) return; const last = banners[banners.length - 1]; if (last && last[1] === r - 1) last[1] = r; else banners.push([r, r]) })
+    return { title, subtitle, days, rows, banners, footer: `Book at ${window.location.host} · @cappriccio.nails` }
   })()
 
   const key = story ? JSON.stringify(story) : ''
@@ -127,7 +139,7 @@ export default function SlotsOverview({ open, onClose, startMonth }) {
           {!data && <div className="skeleton absolute inset-0" />}
           <canvas ref={canvas} className="block h-full w-full" />
         </div>
-        <p className="text-center text-xs text-cream/55">Updates live as clients book. Hidden days and days off show as CLOSED; times already past are crossed out.</p>
+        <p className="text-center text-xs text-cream/55">Updates live as clients book. Fully hidden weeks show “Available soon”; other hidden days and days off show as CLOSED; times already past are crossed out.</p>
         {/* Always visible at the bottom of the pop-up, even while scrolling the preview */}
         <div className="sticky -bottom-4 -mx-4 -mb-4 mt-auto shrink-0 border-t border-cream/10 bg-[#1a050b]/95 px-4 pb-4 pt-3 backdrop-blur">
           <Btn className="w-full gap-2" disabled={!data || busy} onClick={download}>⤓ Download for story (PNG)</Btn>
