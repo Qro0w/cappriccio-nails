@@ -169,12 +169,13 @@ export const RATES = {
     { head: 'Add-on', rows: [['Intensive Manicure', '300']] },
   ],
   removals: [
-    { head: 'My Work', rows: [['Structured Manicure Fill*', '80'], ['Soft Gel removal w/ new set', '100']] },
+    { head: 'My Work', rows: [['Structured Manicure Fill*', '80'], ['Soft Gel removal w/ new set', '100'], ['Hard Gel full removal', '200'], ['BIAB full removal', '100']] },
     { head: 'Foreign Removals', rows: [['Foreign Soft Gel removal w/new set', '200'], ['Foreign Hard gel removal w/new set', '300']] },
   ],
   notes: [
     '*Structured manicure Fills/ Fills in general are considered a removal',
     '__Structured mani fill only available for those that pick BIAB and Hard Gel mani__',
+    '__Hard Gel and BIAB full removal only available for those that pick Soft Gel and Hard Gel Extensions__',
   ],
 }
 
@@ -186,6 +187,7 @@ export const SEND_REMINDER = 'Please send **a photo of your design** and **a scr
 export const REMOVAL_NOTE =
   'Please do mention if you have any existing nail enhancements; //failure to do so will lead to an additional 80php fee on top of removal fees//'
 export const F_HARD_NOTE = 'Foreign Hard Gel removal only available for 5pm slots'
+export const HARD_FULL_NOTE = 'Hard Gel full removal only available for 5pm slots'
 
 // ---------- Forgotten booking code (client messages the nailtech; nothing is recovered automatically) ----------
 export const FORGOT_FIELDS = ['Your full name', 'The phone number you booked with', 'Your Instagram handle', 'The exact date and time of your booking', 'Your service (and tier, if you remember)']

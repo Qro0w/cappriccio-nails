@@ -17,6 +17,8 @@ export const REMOVALS = {
   none:   { label: 'No removal',                         fee: 0,   group: null },
   fill:   { label: 'Structured Manicure Fill*',          fee: 80,  group: 'My Work' },
   soft:   { label: 'Soft Gel removal w/ new set',        fee: 100, group: 'My Work' },
+  hard_full: { label: 'Hard Gel full removal',           fee: 200, group: 'My Work' }, // extensions only
+  biab_full: { label: 'BIAB full removal',               fee: 100, group: 'My Work' }, // extensions only
   f_soft: { label: 'Foreign Soft Gel removal w/new set', fee: 200, group: 'Foreign Removals' },
   f_hard: { label: 'Foreign Hard gel removal w/new set', fee: 300, group: 'Foreign Removals' },
 }
@@ -29,9 +31,12 @@ const BASE = {
   hardgele: { short: 650, medium: 700, long: 750 },
 }
 
-// Structured fill is only for BIAB / Hard Gel mani
-export const removalOptions = (service) =>
-  Object.keys(REMOVALS).filter((k) => k !== 'fill' || ['biab', 'hardgel'].includes(service))
+// Which removals each service can pick (must match removal_ok() in the database):
+//  - Structured fill: BIAB / Hard Gel mani only
+//  - Hard Gel / BIAB full removal: Soft Gel / Hard Gel Extensions only
+const ONLY_FOR = { fill: ['biab', 'hardgel'], hard_full: ['softgel', 'hardgele'], biab_full: ['softgel', 'hardgele'] }
+export const removalOk = (service, removal) => !ONLY_FOR[removal] || ONLY_FOR[removal].includes(service)
+export const removalOptions = (service) => Object.keys(REMOVALS).filter((k) => removalOk(service, k))
 
 // Intensive manicure conditions (Booking doc "CONDITIONS")
 export function intensiveAllowed(service, tier, removal) {

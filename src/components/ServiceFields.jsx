@@ -1,5 +1,5 @@
 import Select from './Select'
-import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, intensiveAllowed, removalOptions } from '../lib/config'
+import { INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, intensiveAllowed, removalOk, removalOptions } from '../lib/config'
 import { peso } from '../lib/format'
 import { Field } from './ui'
 
@@ -12,7 +12,7 @@ export default function ServiceFields({ value: v, onChange, errors = {} }) {
   return (
     <div className="space-y-3">
       <Field label="Service" error={errors.service}>
-        <Select value={v.service} onChange={(x) => set({ service: x, length: '', removal: v.removal === 'fill' ? '' : v.removal, intensive: false })}
+        <Select value={v.service} onChange={(x) => set({ service: x, length: '', removal: removalOk(x, v.removal) ? v.removal : '', intensive: false })}
           options={Object.entries(SERVICES).map(([k, s]) => ({ value: k, label: s.label }))} />
       </Field>
       {ext && (

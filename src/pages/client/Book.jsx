@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { IG_DM_URL, IG_HANDLE, INTENSIVE_FEE, LENGTHS, REMOVALS, SERVICES, calcPrice, intensiveAllowed, priceBreakdown, removalOptions } from '../../lib/config'
 import { policiesFrom, policyVersionFrom, usePublicSettings } from '../../lib/publicSettings'
 import { EmptyState, Skeleton } from '../../components/Feedback'
-import { AFTER_RESERVE, F_HARD_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted, POLICY_INTRO } from '../../lib/content'
+import { AFTER_RESERVE, F_HARD_NOTE, HARD_FULL_NOTE, REMOVAL_NOTE, SERVICE_GROUPS, TIER_NOTE, policyAccepted, savePolicyAccepted, POLICY_INTRO } from '../../lib/content'
 import Rich from '../../components/Rich'
 import { IgIcon } from '../../components/Icons'
 import { cleanIg, cleanPhone, fmtDate, fmtTime, peso, validPhone } from '../../lib/format'
@@ -100,6 +100,7 @@ function Build({ form, setForm, onNext, onBack }) {
                   .map((k) => ({ value: k, label: REMOVALS[k].label, extra: `+${peso(REMOVALS[k].fee)}`, group: g }))),
               ]} />
               {form.removal === 'f_hard' && <span className="mt-1 block text-xs font-semibold text-peach">{F_HARD_NOTE}</span>}
+              {form.removal === 'hard_full' && <span className="mt-1 block text-xs font-semibold text-peach">{HARD_FULL_NOTE}</span>}
               <span className="mt-1 block text-xs text-cream/60"><Rich text={REMOVAL_NOTE} /></span>
             </Field>
           </Card>
