@@ -452,6 +452,7 @@ export default function BookingDetail() {
           <div className="rise-in w-full max-w-sm space-y-3 rounded-3xl border border-cream/20 bg-[#2a0612] p-5 shadow-2xl">
             <h3 className="font-display text-2xl font-semibold">Delete permanently?</h3>
             <p className="text-sm text-cream/80">{b.full_name}’s booking {b.code} and everything attached to it will be erased. Type <b>DELETE</b> to confirm.</p>
+            {b.status === 'completed' && <p className="rounded-xl bg-peach/10 p-3 text-xs text-peach">This will also remove 1 visit from {b.instagram || b.full_name}’s count on the Clients page.</p>}
             <input className={inputCls} value={delText} onChange={(e) => setDelText(e.target.value)} autoCapitalize="characters" placeholder="DELETE" />
             <div className="grid grid-cols-2 gap-2">
               <Btn variant="ghost" onClick={() => setDelOpen(false)} disabled={busy}>Go back</Btn>

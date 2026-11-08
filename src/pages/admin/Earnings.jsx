@@ -5,6 +5,7 @@ import { peso, ymd } from '../../lib/format'
 import { Card } from '../../components/ui'
 import { EmptyState, Skeleton } from '../../components/Feedback'
 import { useRemembered } from '../../lib/remember'
+import ClientsView from '../../components/ClientsView'
 
 const total = (b) => (b.final_price != null ? b.final_price : b.estimated_price)
 const PAID = ['confirmed', 'completed', 'no_show', 'cancelled']
@@ -28,6 +29,7 @@ function summarize(list) {
 export default function Earnings() {
   const [rows, setRows] = useState(null)
   const [month, setMonth] = useRemembered('ea.month', () => startOfMonth(new Date()))
+  const [view, setView] = useRemembered('ea.view', 'earnings') // 'earnings' | 'clients'
   useEffect(() => {
     supabase.from('bookings').select('status,slot_date,estimated_price,final_price,dp_amount,balance_paid,balance_method').then(({ data }) => setRows(data || []))
   }, [])
@@ -41,7 +43,15 @@ export default function Earnings() {
   }, [inMonth])
   const methods = inMonth.filter((b) => b.balance_paid != null).reduce((m, b) => ({ ...m, [b.balance_method || 'other']: (m[b.balance_method || 'other'] || 0) + b.balance_paid }), {})
 
-  if (!rows) return <Skeleton lines={4} />
+  const seg = (on) => `min-h-10 flex-1 rounded-xl text-sm font-semibold transition-colors ${on ? 'bg-cream text-ink' : 'text-cream/70'}`
+  const toggle = (
+    <div className="flex gap-1 rounded-2xl bg-cream/5 p-1" role="tablist">
+      <button role="tab" aria-selected={view === 'earnings'} className={seg(view === 'earnings')} onClick={() => setView('earnings')}>Earnings</button>
+      <button role="tab" aria-selected={view === 'clients'} className={seg(view === 'clients')} onClick={() => setView('clients')}>Clients</button>
+    </div>
+  )
+  if (view === 'clients') return <div className="space-y-4">{toggle}<ClientsView /></div>
+  if (!rows) return <div className="space-y-4">{toggle}<Skeleton lines={4} /></div>
   const Stat = ({ label, value, strong }) => (
     <div className="rounded-2xl bg-ink/40 p-3">
       <div className="text-xs text-cream/60">{label}</div>
@@ -50,6 +60,7 @@ export default function Earnings() {
   )
   return (
     <div className="space-y-4">
+      {toggle}
       <div className="flex items-center justify-between">
         <button onClick={() => setMonth(addMonths(month, -1))} aria-label="Previous month" className="size-11 rounded-full text-xl hover:bg-cream/10">‹</button>
         <h1 className="font-display text-3xl font-semibold">{format(month, 'MMMM yyyy')}</h1>
