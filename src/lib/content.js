@@ -175,7 +175,7 @@ export const RATES = {
   notes: [
     '*Structured manicure Fills/ Fills in general are considered a removal',
     '__Structured mani fill only available for those that pick BIAB and Hard Gel mani__',
-    '__Hard Gel and BIAB full removal only available for those that pick Soft Gel and Hard Gel Extensions__',
+    '__BIAB full removal only available for those that pick Soft Gel and Hard Gel Extensions__',
   ],
 }
 
