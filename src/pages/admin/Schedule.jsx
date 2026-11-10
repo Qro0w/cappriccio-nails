@@ -88,6 +88,7 @@ export default function Schedule() {
   const [delPreset, setDelPreset] = useState(null)
   const [overview, setOverview] = useState(false)
   const [offAsk, setOffAsk] = useState(null) // list of dates to turn into days off
+  const [anyAsk, setAnyAsk] = useState(null) // day waiting for "Any service, any time" confirmation
   const [replaceAsk, setReplaceAsk] = useState(null) // preset to apply in "replace" mode
 
   const load = useCallback(async () => {
@@ -443,7 +444,7 @@ export default function Schedule() {
           {todays.length > 0 && <div className="space-y-2">
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-cream/10 p-3">
               <div className="text-sm">Any service, any time<div className="text-xs text-cream/60">Ignores the service rules for this day</div></div>
-              <Switch checked={drow?.allow_any ?? false} onChange={(v) => setDayFlag(day, { allow_any: v })} label="Any service, any time" />
+              <Switch checked={drow?.allow_any ?? false} onChange={(v) => (v ? setAnyAsk(day) : setDayFlag(day, { allow_any: false }))} label="Any service, any time" />
             </div>
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-cream/10 p-3">
               <div className="text-sm">Show this day to clients
@@ -485,6 +486,9 @@ export default function Schedule() {
       <ConfirmDialog open={!!offAsk} danger title={offAsk?.length === 1 ? 'Make this a day off?' : `Make ${offAsk?.length} days off?`}
         body={offAsk ? `${offCount(offAsk)} time${offCount(offAsk) === 1 ? '' : 's'} will be removed${offAsk.length === 1 ? ` from ${fmtDate(offAsk[0])}` : ''}. Booked times stay. You can add times back any time.` : ''}
         confirmLabel="Yes, make day off" onConfirm={() => makeDaysOff(offAsk)} onCancel={() => setOffAsk(null)} />
+      <ConfirmDialog open={!!anyAsk} title="Turn on “Any service, any time”?"
+        body={`Clients will be able to book ANY service, removal and tier at ANY time on ${anyAsk ? format(parseISO(anyAsk), 'EEE, MMM d') : 'this day'}. All the service rules are ignored for this day, including “1pm no removals”.`}
+        confirmLabel="Yes, turn it on" onConfirm={() => { const d = anyAsk; setAnyAsk(null); setDayFlag(d, { allow_any: true }) }} onCancel={() => setAnyAsk(null)} />
       <ConfirmDialog open={!!delPreset} danger title="Delete this preset?" body={`“${delPreset?.name}” will be removed. Dates already filled with it stay as they are.`} confirmLabel="Delete" onConfirm={removePreset} onCancel={() => setDelPreset(null)} />
       <ConfirmDialog open={!!replaceAsk} title={`Replace with “${replaceAsk?.name}”?`}
         body={`The ${picked.size} picked date(s) will have only these times: ${replaceAsk ? timesText(replaceAsk.times) : ''}. Other open times on those dates are removed, except booked ones.`}
