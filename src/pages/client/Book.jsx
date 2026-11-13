@@ -161,7 +161,7 @@ function Build({ form, setForm, onNext, onBack }) {
           </div>
         )}
         {tried && <FormAlert items={[...new Set(problems.map((x) => x.label))]} />}
-        {blocked && <p role="alert" className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">Sorry, you’re not able to book at this time. For questions, please message @cappriccio.nails on Instagram.</p>}
+        {blocked && <p role="alert" className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">Sorry, you’ve been restricted from booking due to previous records. If you think this is a mistake, please message @cappriccio.nails on Instagram.</p>}
         <Btn className="w-full" disabled={checking || blocked} onClick={next}>{checking ? 'Checking…' : 'Choose date & time'}</Btn>
       </div>
     </div>
@@ -272,7 +272,7 @@ function Review({ form, pick, onBack, onTaken, policyVersion }) {
     if (error) {
       const m = error.message || ''
       if (m.includes('SLOT_TAKEN') || m.includes('SLOT_UNAVAILABLE')) { setErr('Sorry, that slot was just taken. Please pick another one.'); return setTimeout(onTaken, 1800) }
-      if (m.includes('BLOCKED')) return setErr('Sorry, you’re not able to book at this time. For questions, please message @cappriccio.nails on Instagram.')
+      if (m.includes('BLOCKED')) return setErr('Sorry, you’ve been restricted from booking due to previous records. If you think this is a mistake, please message @cappriccio.nails on Instagram.')
       if (m.includes('TOO_MANY_PENDING')) return setErr('You already have 2 bookings waiting for payment or confirmation. Please pay for those first, or message @cappriccio.nails.')
       return setErr('Something went wrong. Please check your details and try again.')
     }
