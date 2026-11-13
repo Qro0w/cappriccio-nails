@@ -49,3 +49,11 @@ end $$;
 drop trigger if exists bookings_reject_blocked on public.bookings;
 create trigger bookings_reject_blocked before insert on public.bookings
   for each row execute function public.reject_blocked();
+
+-- lets the booking form stop a blocked client right after they enter their details
+-- (answers only true/false; the list itself stays private)
+create or replace function public.booking_blocked(p_phone text, p_ig text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select is_blocked(p_phone, p_ig)
+$$;
+grant execute on function public.booking_blocked(text, text) to anon, authenticated;

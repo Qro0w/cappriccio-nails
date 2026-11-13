@@ -54,13 +54,21 @@ function Build({ form, setForm, onNext, onBack }) {
   const [rates, setRates] = useState(false)
   const [breakdown, setBreakdown] = useState(false)
   const [tried, setTried] = useState(false)
+  const [blocked, setBlocked] = useState(false)
+  const [checking, setChecking] = useState(false)
+  useEffect(() => { setBlocked(false) }, [form.phone, form.instagram])
   const e = effective(form)
   const price = calcPrice(form.service, e.length, form.removal, e.intensive)
   const opts = form.service ? removalOptions(form.service) : []
   const problems = validate(form)
   const err = (id) => (tried ? problems.find((x) => x.id === id)?.msg : undefined)
-  function next() {
+  async function next() {
     if (problems.length) { setTried(true); scrollToFirst(problems.map((x) => x.id)); return }
+    // blocked clients stop here, before picking a slot (the final booking step checks again)
+    setChecking(true)
+    const { data, error } = await supabase.rpc('booking_blocked', { p_phone: form.phone, p_ig: form.instagram })
+    setChecking(false)
+    if (!error && data === true) { setBlocked(true); return }
     onNext()
   }
 
@@ -153,7 +161,8 @@ function Build({ form, setForm, onNext, onBack }) {
           </div>
         )}
         {tried && <FormAlert items={[...new Set(problems.map((x) => x.label))]} />}
-        <Btn className="w-full" onClick={next}>Choose date & time</Btn>
+        {blocked && <p role="alert" className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">Sorry, you’re not able to book at this time. For questions, please message @cappriccio.nails on Instagram.</p>}
+        <Btn className="w-full" disabled={checking || blocked} onClick={next}>{checking ? 'Checking…' : 'Choose date & time'}</Btn>
       </div>
     </div>
   )
