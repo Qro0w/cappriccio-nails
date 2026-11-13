@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { normPhone } from './clients'
 
 // Blocked clients (nailtech only). A client is blocked if their phone number OR Instagram handle
-// is on the list. The database enforces it too (supabase/20_blocklist.sql).
+// is on the list. The database enforces it too (supabase/18_blocklist.sql).
 export const normIg = (v = '') => String(v).replace(/[@\s]/g, '').toLowerCase()
 
 export function useBlocklist() {

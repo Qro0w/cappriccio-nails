@@ -1,4 +1,4 @@
--- 20_blocklist.sql
+-- 18_blocklist.sql
 -- Blocked clients: anyone whose phone number OR Instagram handle is on this list can't book
 -- from the website. The nailtech can still add bookings for them herself.
 -- Run ONCE in the Supabase SQL Editor (safe to re-run).

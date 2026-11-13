@@ -2,7 +2,10 @@
 -- New removals for Soft Gel / Hard Gel Extensions only:
 --   hard_full = Hard Gel full removal  +200  (same times as Foreign Hard Gel removal)
 --   biab_full = BIAB full removal      +100  (same times as Soft Gel removal w/ new set)
--- Run ONCE in the Supabase SQL Editor. Safe to run more than once.
+-- Also includes (merged here, were 18 + 19):
+--   * the Scheduling-sheet rules (they were missing from the database: December showed no times)
+--   * Hard Gel full removal opened to EVERY service (BIAB full removal stays extensions only)
+-- Run in the Supabase SQL Editor. Safe to run more than once.
 
 -- 1. bookings may store the new codes
 do $$ declare c text; begin   -- drop whichever old check limits the removal codes
@@ -175,3 +178,55 @@ end $$;
 revoke all on function public.admin_create_booking(text,text,text,int,text,text,text,int,boolean,date,time,text,int) from anon;
 grant execute on function public.admin_create_booking(text,text,text,int,text,text,text,int,boolean,date,time,text,int) to authenticated;
 
+
+
+-- ===== (was 18) Scheduling-sheet rules, restored =====
+-- Scheduling doc checkbox matrix
+-- ALL = 9:00, 11:00, 12:00, 2:30, 5:00     S = 9:00, 11:00, 5:00     L = 5:00 only
+insert into public.slot_rules (service, tier, removal, slot_time)
+select s, t, r, ti::time
+from (values
+  (array['biab','hardgel','softgel','hardgele'], array[1,2,3,4], array['f_hard'],        array['17:00']),
+  (array['biab','hardgel','softgel'],            array[1,2,3,4], array['none'],          array['09:00','11:00','12:00','14:30','17:00']),
+  (array['hardgele'],                            array[1,2],     array['none'],          array['09:00','11:00','12:00','14:30','17:00']),
+  (array['hardgele'],                            array[3],       array['none'],          array['09:00','11:00','17:00']),
+  (array['hardgele'],                            array[4],       array['none'],          array['17:00']),
+  (array['biab','hardgel','softgel'],            array[1,2],     array['soft','f_soft'], array['09:00','11:00','12:00','14:30','17:00']),
+  (array['biab','hardgel','softgel'],            array[3,4],     array['soft','f_soft'], array['09:00','11:00','17:00']),
+  (array['hardgele'],                            array[1],       array['soft','f_soft'], array['09:00','11:00','12:00','14:30','17:00']),
+  (array['hardgele'],                            array[2],       array['soft','f_soft'], array['09:00','11:00','17:00']),
+  (array['hardgele'],                            array[3,4],     array['soft','f_soft'], array['17:00']),
+  (array['biab','hardgel'],                      array[1,2],     array['fill'],          array['09:00','11:00','12:00','14:30','17:00']),
+  (array['biab','hardgel'],                      array[3,4],     array['fill'],          array['09:00','11:00','17:00'])
+) as d(services, tiers, removals, times),
+  unnest(d.services) s, unnest(d.tiers) t, unnest(d.removals) r, unnest(d.times) ti
+on conflict do nothing;
+
+-- Extensions only: Hard Gel full removal = Foreign Hard Gel times, BIAB full removal = Soft Gel removal times
+insert into public.slot_rules (service, tier, removal, slot_time)
+select r.service, r.tier, case r.removal when 'f_hard' then 'hard_full' else 'biab_full' end, r.slot_time
+from public.slot_rules r
+where r.service in ('softgel','hardgele') and r.removal in ('f_hard','soft')
+on conflict do nothing;
+
+
+
+-- ===== (was 19) Hard Gel full removal for every service =====
+create or replace function public.removal_ok(p_service text, p_removal text) returns boolean
+language sql immutable as $$
+  select case p_removal
+    when 'none' then true when 'soft' then true when 'f_soft' then true when 'f_hard' then true
+    when 'hard_full' then true
+    when 'fill'      then p_service in ('biab','hardgel')
+    when 'biab_full' then p_service in ('softgel','hardgele')
+    else false end
+$$;
+
+-- sheet months: Hard Gel full removal gets the Foreign Hard Gel times for every service and tier
+insert into public.slot_rules (service, tier, removal, slot_time)
+select r.service, r.tier, 'hard_full', r.slot_time
+from public.slot_rules r
+where r.removal = 'f_hard'
+on conflict do nothing;
+
+select count(*) filter (where removal = 'hard_full') as hard_full_rules from public.slot_rules;  -- should say 16
