@@ -9,6 +9,8 @@ import { buildClients, normPhone } from '../lib/clients'
 import { drawClients } from '../lib/clientsImage'
 import { loadStoryAssets } from '../lib/storyImage'
 import { useRemembered } from '../lib/remember'
+import { normIg, useBlocklist } from '../lib/blocked'
+import Collapsible from './Collapsible'
 import { Btn, Card } from './ui'
 import { EmptyState, Skeleton } from './Feedback'
 
@@ -23,6 +25,7 @@ export default function ClientsView() {
   const [q, setQ] = useRemembered('cl.q', '')
   const [openKey, setOpenKey] = useRemembered('cl.open', null)
   const [busy, setBusy] = useState(false)
+  const blk = useBlocklist()
 
   useEffect(() => {
     supabase.from('bookings').select(COLS).then(({ data, error }) => {
@@ -90,7 +93,7 @@ export default function ClientsView() {
                   <button key={c.key} onClick={() => setOpenKey(c.key)} className="flex w-full items-center gap-3 py-3 text-left">
                     <span className={`w-7 shrink-0 text-center font-display text-2xl italic ${top ? 'text-rose' : 'text-rose/60'}`}>{i + 1}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">{c.ig || c.name}</span>
+                      <span className="flex items-center gap-2"><span className="truncate font-semibold">{c.ig || c.name}</span>{blk.findEntry(c.phone, c.ig) && <span className="shrink-0 rounded-full bg-red-400/15 px-2 py-0.5 text-[10px] font-semibold text-red-200">Blocked</span>}</span>
                       <span className="block truncate text-xs text-cream/55">{c.ig ? `${c.name} · ` : ''}{c.phone}</span>
                     </span>
                     <span className="shrink-0 text-right text-xs text-cream/55">
@@ -106,17 +109,65 @@ export default function ClientsView() {
         )}
         <p className="text-xs text-cream/50">Sorted by completed visits. Cancelled, rejected, expired and no-show bookings don’t count as visits. “Paid” = downpayments kept + balances paid.</p>
       </Card>
+      <BlockedList blk={blk} />
       {clients.length > 0 && (
         <div className="sticky bottom-24 z-10">
           <Btn className="w-full gap-2 shadow-2xl" disabled={busy} onClick={download}>{busy ? 'Making the image…' : '⤓ Download top 20 (PNG)'}</Btn>
         </div>
       )}
-      {open && <ClientSheet c={open} onClose={() => setOpenKey(null)} />}
+      {open && <ClientSheet c={open} blk={blk} onClose={() => setOpenKey(null)} />}
     </div>
   )
 }
 
-function ClientSheet({ c, onClose }) {
+function BlockedList({ blk }) {
+  const [open, setOpen] = useState(false)
+  const [ig, setIg] = useState('')
+  const [phone, setPhone] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const n = blk.list?.length || 0
+  async function add(e) {
+    e.preventDefault(); setBusy(true)
+    const msg = await blk.block({ instagram: ig, phone })
+    setBusy(false); setErr(msg)
+    if (!msg) { setIg(''); setPhone('') }
+  }
+  return (
+    <Collapsible title="⛔ Blocked clients" sub={n ? `${n} blocked` : 'Nobody blocked'} open={open} onToggle={() => setOpen((v) => !v)}>
+      <div className="space-y-3">
+        <p className="text-xs text-cream/60">Anyone here can’t book from the website, matched by Instagram handle <b>or</b> phone number. You can still add bookings for them yourself.</p>
+        {(blk.err || err) && <p className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">{blk.err || err}</p>}
+        <div className="divide-y divide-cream/10">
+          {(blk.list || []).map((b) => (
+            <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{b.instagram ? '@' + b.instagram : b.name || 'No handle'}</span>
+                <span className="block truncate text-xs text-cream/55">{[b.name, b.phone ? '0' + b.phone : null].filter(Boolean).join(' · ') || '—'}</span>
+              </span>
+              <button disabled={busy} onClick={async () => { setBusy(true); setErr(await blk.unblock(b)); setBusy(false) }}
+                className="min-h-10 shrink-0 rounded-full border border-cream/25 px-4 text-sm font-semibold">Unblock</button>
+            </div>
+          ))}
+        </div>
+        <form onSubmit={add} className="space-y-2 rounded-2xl border border-cream/10 p-3">
+          <div className="text-sm font-semibold text-peach">Block someone</div>
+          <input value={ig} onChange={(e) => setIg(e.target.value)} placeholder="Instagram handle, e.g. @name" autoCapitalize="none"
+            className="min-h-11 w-full rounded-2xl border border-cream/20 bg-ink/50 px-4 text-base focus:border-rose focus:outline-none" />
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number (optional)" inputMode="tel"
+            className="min-h-11 w-full rounded-2xl border border-cream/20 bg-ink/50 px-4 text-base focus:border-rose focus:outline-none" />
+          <Btn type="submit" variant="danger" className="w-full" disabled={busy || (!normIg(ig) && !phone.trim())}>Block</Btn>
+        </form>
+      </div>
+    </Collapsible>
+  )
+}
+
+function ClientSheet({ c, blk, onClose }) {
+  const entry = blk.findEntry(c.phone, c.ig)
+  const [ask, setAsk] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
   useEffect(() => {
     const esc = (e) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', esc)
@@ -138,6 +189,23 @@ function ClientSheet({ c, onClose }) {
           <div className="rounded-2xl bg-cream/5 p-3"><div className="text-xs text-cream/55">Paid</div><div className="font-display text-xl leading-8">{peso(c.paid)}</div></div>
           <div className="rounded-2xl bg-cream/5 p-3"><div className="text-xs text-cream/55">Client since</div><div className="font-display text-xl leading-8">{c.first ? format(parseISO(c.first), 'MMM yyyy') : '—'}</div></div>
         </div>
+        {err && <p className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</p>}
+        {entry ? (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-400/30 bg-red-500/10 p-3">
+            <span className="text-sm text-red-200">⛔ Blocked from booking</span>
+            <button disabled={busy} onClick={async () => { setBusy(true); setErr(await blk.unblock(entry)); setBusy(false) }} className="min-h-10 rounded-full border border-cream/25 px-4 text-sm font-semibold">Unblock</button>
+          </div>
+        ) : ask ? (
+          <div className="space-y-2 rounded-2xl border border-red-400/30 bg-red-500/10 p-3">
+            <p className="text-sm">Block {c.ig || c.name}? They won’t be able to book from the website. Bookings they already have stay as they are.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Btn variant="ghost" onClick={() => setAsk(false)} disabled={busy}>Go back</Btn>
+              <Btn variant="danger" disabled={busy} onClick={async () => { setBusy(true); setErr(await blk.block({ phone: c.phone, instagram: c.ig, name: c.name })); setBusy(false); setAsk(false) }}>Yes, block</Btn>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setAsk(true)} className="w-full text-left text-sm font-semibold text-red-200/80">⛔ Block this client</button>
+        )}
         <div>
           <div className="mb-1 text-sm font-semibold text-peach">Bookings</div>
           <div className="divide-y divide-cream/10">

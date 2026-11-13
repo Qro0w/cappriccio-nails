@@ -13,6 +13,7 @@ import Collapsible from '../../components/Collapsible'
 import ServiceFields, { serviceErrors } from '../../components/ServiceFields'
 import { EmptyState, Skeleton } from '../../components/Feedback'
 import { useBack } from '../../lib/remember'
+import { useBlocklist } from '../../lib/blocked'
 
 function Reschedule({ b, onMoved }) {
   const [open, setOpen] = useState(false)
@@ -98,6 +99,9 @@ export default function BookingDetail() {
   const [dlg, setDlg] = useState(null)
   const [rejectNote, setRejectNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const blk = useBlocklist()
+  const [blkAsk, setBlkAsk] = useState(false)
+  const [blkErr, setBlkErr] = useState('')
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [events, setEvents] = useState([])
@@ -435,6 +439,22 @@ export default function BookingDetail() {
         </Collapsible>
       </Card>
 
+      {blk.list && (() => {
+        const entry = blk.findEntry(b.phone, b.instagram)
+        return (
+          <Card className={`space-y-2 ${entry ? 'border-red-400/40' : ''}`}>
+            <h2 className={`font-semibold ${entry ? 'text-red-200' : 'text-peach'}`}>{entry ? '⛔ This client is blocked' : 'Block this client'}</h2>
+            <p className="text-xs text-cream/70">{entry
+              ? 'They can’t book from the website. You can still add bookings for them yourself.'
+              : 'Stops this Instagram handle and phone number from booking on the website. Bookings they already have stay as they are.'}</p>
+            {blkErr && <ErrorText>{blkErr}</ErrorText>}
+            {entry
+              ? <Btn variant="ghost" className="w-full" disabled={busy} onClick={async () => { setBusy(true); setBlkErr(await blk.unblock(entry)); setBusy(false) }}>Unblock</Btn>
+              : <Btn variant="danger" className="w-full" onClick={() => setBlkAsk(true)}>Block client</Btn>}
+          </Card>
+        )
+      })()}
+
       {canDelete && (
         <Card className="space-y-2 border-red-400/30">
           <h2 className="font-semibold text-red-200">Delete from history</h2>
@@ -446,6 +466,11 @@ export default function BookingDetail() {
       </div>
       </div>
 
+      <ConfirmDialog open={blkAsk} danger title={`Block ${b.full_name}?`}
+        body={`${b.instagram || 'This client'} · ${b.phone} won’t be able to book from the website anymore. Their current bookings stay as they are, so cancel or mark them yourself if needed.`}
+        confirmLabel="Yes, block" busy={busy}
+        onConfirm={async () => { setBusy(true); const e = await blk.block({ phone: b.phone, instagram: b.instagram, name: b.full_name }); setBusy(false); setBlkErr(e); setBlkAsk(false) }}
+        onCancel={() => setBlkAsk(false)} />
       <ReceiptModal url={receipt} open={view != null} onClose={() => setView(null)} />
       {delOpen && (
         <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
